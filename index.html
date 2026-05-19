@@ -569,7 +569,7 @@ function renderBudget(mn){
   Object.keys(gm).forEach(k=>{const[cg]=k.split('||');if(!cgs.includes(cg))cgs.push(cg);});
   const tb=document.getElementById('bud-body');
   if(!cgs.length){tb.innerHTML=`<tr><td colspan="6"><div class="emp"><div class="emp-ico">📊</div><div class="emp-ttl">Sem dados de budget</div><div class="emp-sub">Verifique a aba 05.2 Budget FACILITIES</div></div></td></tr>`;return;}
-  const cgS=cg=>cg.replace('Morumbi','MBI').replace('Alphaville','ALF').replace('Pinheiros','PIN').replace('Paraíso','PAR').replace('Tatuapé','TAT').replace('Santana','SAN').replace('Anália Franco','ANF');
+  const cgS=cg=>cg;
   let h='';
   cgs.forEach(cg=>{
     const te=S.budget.find(b=>b.cg===cg&&b.isTotal)||{};
@@ -608,7 +608,7 @@ function nfRow(n,anx){
   const venc=n.vencimento?new Date(n.vencimento+'T00:00:00').toLocaleDateString('pt-BR'):'—';
   const val=n.valor?`R$ ${parseFloat(n.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}`:'—';
   const ax=anx?(n.driveUrl?`<a href="${n.driveUrl}" target="_blank" style="color:var(--purple);font-weight:700;font-size:12px">ver ↗</a>`:`<span style="color:var(--text-dim)">—</span>`):'';
-  const cgs=(n.cg||'').replace('Morumbi','MBI').replace('Alphaville','ALF').replace('Pinheiros','PIN').replace('Paraíso','PAR').replace('Tatuapé','TAT').replace('Santana','SAN').replace('Anália Franco','ANF');
+  const cgs=n.cg||'';
   return `<tr>
     <td><span class="nf-num">${n.nf||'—'}</span></td>
     <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">${n.fornecedor||'—'}</td>
