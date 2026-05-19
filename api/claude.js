@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   // Teste simples: chama Gemini só com texto para confirmar que a chave funciona
   if (req.method === 'GET' || (req.body && req.body.ping)) {
-    const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
     const testResp = await fetch(testUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       ...docs.map(d => ({ inlineData: { mimeType: d.type, data: d.data } })),
       { text: prompt }
     ];
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
