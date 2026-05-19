@@ -329,7 +329,37 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <!-- LANÇAR NF -->
     <section class="page" id="page-lancar">
       <div class="fb">
-        <div class="fb-head"><div class="fb-step">1</div><div class="fb-title">Identificação da nota fiscal</div></div>
+        <div class="fb-head"><div class="fb-step">1</div><div class="fb-title">Anexos — NF e/ou Boleto</div></div>
+        <div class="fb-body">
+          <div class="upz" id="upz">
+            <input type="file" id="f-files" multiple accept=".pdf,.png,.jpg,.jpeg" onchange="handleFiles(this.files)">
+            <div class="up-icon">📎</div>
+            <div class="up-title">Arraste os arquivos aqui ou clique para selecionar</div>
+            <div class="up-sub">PDF, PNG ou JPG · máx. 10 MB por arquivo</div>
+            <div class="file-list" id="file-list"></div>
+          </div>
+          <!-- AI EXTRACT BUTTON -->
+          <div id="ai-bar" style="display:none;margin-top:14px">
+            <button class="btn btn-p" id="ai-btn" onclick="extractWithAI()" style="width:100%;justify-content:center;gap:10px;padding:13px">
+              <span id="ai-btn-icon">✨</span>
+              <span id="ai-btn-txt">Preencher campos com IA</span>
+            </button>
+          </div>
+          <!-- AI RESULT PANEL -->
+          <div id="ai-panel" style="display:none;margin-top:14px;background:var(--purple-muted);border:1.5px solid var(--purple-border);border-radius:var(--radius);padding:16px 18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <span style="font-size:16px">✨</span>
+              <span style="font-size:13px;font-weight:800;color:var(--purple);font-family:var(--font-display)">Campos preenchidos pela IA</span>
+              <span id="ai-conf-badge" style="margin-left:auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--green-bg);color:var(--green)"></span>
+            </div>
+            <div id="ai-fields-summary" style="font-size:12.5px;color:var(--text-muted);font-weight:600;line-height:1.7"></div>
+            <!-- Campos com baixa confiança -->
+            <div id="ai-choices" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--purple-border)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="fb">
+        <div class="fb-head"><div class="fb-step">2</div><div class="fb-title">Identificação da nota fiscal</div></div>
         <div class="fb-body">
           <div class="fg3">
             <div class="ff"><label>Fornecedor *</label>
@@ -359,38 +389,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         </div>
       </div>
       <div class="fb">
-        <div class="fb-head"><div class="fb-step">2</div><div class="fb-title">Observações</div></div>
+        <div class="fb-head"><div class="fb-step">3</div><div class="fb-title">Observações</div></div>
         <div class="fb-body"><div class="ff"><label>Comentário / descrição</label><textarea id="f-com" placeholder="Informações adicionais, número de contrato, detalhes do serviço…"></textarea></div></div>
-      </div>
-      <div class="fb">
-        <div class="fb-head"><div class="fb-step">3</div><div class="fb-title">Anexos — NF e/ou Boleto</div></div>
-        <div class="fb-body">
-          <div class="upz" id="upz">
-            <input type="file" id="f-files" multiple accept=".pdf,.png,.jpg,.jpeg" onchange="handleFiles(this.files)">
-            <div class="up-icon">📎</div>
-            <div class="up-title">Arraste os arquivos aqui ou clique para selecionar</div>
-            <div class="up-sub">PDF, PNG ou JPG · máx. 10 MB por arquivo</div>
-            <div class="file-list" id="file-list"></div>
-          </div>
-          <!-- AI EXTRACT BUTTON -->
-          <div id="ai-bar" style="display:none;margin-top:14px">
-            <button class="btn btn-p" id="ai-btn" onclick="extractWithAI()" style="width:100%;justify-content:center;gap:10px;padding:13px">
-              <span id="ai-btn-icon">✨</span>
-              <span id="ai-btn-txt">Preencher campos com IA</span>
-            </button>
-          </div>
-          <!-- AI RESULT PANEL -->
-          <div id="ai-panel" style="display:none;margin-top:14px;background:var(--purple-muted);border:1.5px solid var(--purple-border);border-radius:var(--radius);padding:16px 18px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-              <span style="font-size:16px">✨</span>
-              <span style="font-size:13px;font-weight:800;color:var(--purple);font-family:var(--font-display)">Campos preenchidos pela IA</span>
-              <span id="ai-conf-badge" style="margin-left:auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--green-bg);color:var(--green)"></span>
-            </div>
-            <div id="ai-fields-summary" style="font-size:12.5px;color:var(--text-muted);font-weight:600;line-height:1.7"></div>
-            <!-- Campos com baixa confiança -->
-            <div id="ai-choices" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--purple-border)"></div>
-          </div>
-        </div>
       </div>
       <div class="form-actions">
         <div class="form-hint" id="f-hint">* Campos obrigatórios</div>
