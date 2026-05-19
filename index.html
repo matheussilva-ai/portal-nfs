@@ -843,134 +843,69 @@ O valor_nf deve ser o valor TOTAL da nota fiscal.`;
 }
 
 function applyAIResult(r) {
-  // Preenche campos com confiança alta
-  const set = (id, val) => {
+  const setField = (id, val) => {
     const el = document.getElementById(id);
-    if (!el || !val) return;
+    if (!el || val === undefined || val === null || String(val) === '') return;
     el.value = val;
     el.closest('.ff')?.classList.add('field-ai');
     setTimeout(() => el.closest('.ff')?.classList.remove('field-ai'), 2000);
   };
 
-  // Fornecedor — tenta match com lista, senão usa "Outro"
+  // Fornecedor
   if (r.fornecedor) {
     const sel = document.getElementById('f-forn');
-    const opts = [...sel.options].map(o => o.value);
-    const match = opts.find(o => o.toLowerCase().includes(r.fornecedor.toLowerCase().slice(0,10)));
+    const match = [...sel.options].find(o => o.value && o.value.toLowerCase().includes(r.fornecedor.toLowerCase().slice(0,10)));
     if (match) {
-      sel.value = match;
+      sel.value = match.value;
     } else {
       sel.value = 'Outro (digitar)';
       document.getElementById('outro-w').style.display = 'flex';
-      set('f-forn-o', r.fornecedor);
+      setField('f-forn-o', r.fornecedor);
     }
     sel.closest('.ff')?.classList.add('field-ai');
     setTimeout(() => sel.closest('.ff')?.classList.remove('field-ai'), 2000);
   }
 
-  if (r.nf_numero) set('f-nf', r.nf_numero);
-  if (r.valor_nf)  set('f-val', r.valor_nf);
-  if (r.data_vencimento) set('f-venc', r.data_vencimento);
+  if (r.nf_numero)       setField('f-nf', r.nf_numero);
+  if (r.valor_nf)        setField('f-val', r.valor_nf);
+  if (r.data_vencimento) setField('f-venc', r.data_vencimento);
+  if (r.descricao_servico) setField('f-com', r.descricao_servico);
 
-  // Mês de referência → atualiza o mês do portal
   if (r.mes_referencia) {
     S.mes = r.mes_referencia;
     setMlabel(r.mes_referencia);
     document.getElementById('month-input').value = r.mes_referencia;
   }
 
-  // Comentário com descrição do serviço
-  if (r.descricao_servico) set('f-com', r.descricao_servico);
-
-  // CG — preenche direto se confiança alta, senão adiciona à seção de escolhas
-  const needChoices = [];
-
-  if (r.cg_sugerida && r.confianca_cg === 'alta') {
-    set('f-cg', r.cg_sugerida);
-  } else if (r.cg_sugerida) {
-    // Usa cg_opcoes se disponível, senão monta lista das CGs conhecidas
-    const cgOpts = r.cg_opcoes?.length ? r.cg_opcoes : [
-      r.cg_sugerida,
-      'CG Morumbi','CG Pinheiros','CG Tatuapé','CG Paraíso',
-      'CG Alphaville','CG Anália Franco','CG Santana','Escritório'
-    ].filter((v,i,a) => v && a.indexOf(v)===i).slice(0,5);
-    needChoices.push({
-      label: 'Qual unidade (CG)?',
-      field: 'f-cg',
-      options: cgOpts,
-      sugerida: r.cg_sugerida,
-    });
+  // CG — preenche se o campo estiver vazio; se já preenchido, não toca
+  if (r.cg_sugerida && !document.getElementById('f-cg').value) {
+    setField('f-cg', r.cg_sugerida);
   }
 
-  // Categoria — preenche direto se alta, senão oferece opções
-  // IMPORTANTE: usa cg_opcoes separado de categoria_opcoes para não misturar
-  if (r.categoria_sugerida && r.confianca_categoria === 'alta') {
-    set('f-cat', r.categoria_sugerida);
-  } else if (r.categoria_sugerida) {
-    const catOpts = r.categoria_opcoes?.length ? r.categoria_opcoes : [r.categoria_sugerida];
-    needChoices.push({
-      label: 'Qual categoria?',
-      field: 'f-cat',
-      options: catOpts,
-      sugerida: r.categoria_sugerida,
-    });
+  // Categoria — preenche sempre (confiança alta ou não)
+  if (r.categoria_sugerida) {
+    setField('f-cat', r.categoria_sugerida);
   }
 
-  // Mostra painel de resultado
-  const panel = document.getElementById('ai-panel');
-  panel.style.display = 'block';
-
+  // Painel resumo
+  document.getElementById('ai-panel').style.display = 'block';
   const fields = [
-    r.fornecedor       && `🏢 <b>Fornecedor:</b> ${r.fornecedor}`,
-    r.valor_nf         && `💰 <b>Valor NF:</b> R$ ${parseFloat(r.valor_nf).toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
-    r.data_vencimento  && `📅 <b>Vencimento:</b> ${new Date(r.data_vencimento+'T00:00:00').toLocaleDateString('pt-BR')}`,
-    r.mes_referencia   && `📆 <b>Mês ref.:</b> ${mlabel(r.mes_referencia)}`,
-    r.cg_sugerida && r.confianca_cg==='alta' && `📍 <b>CG:</b> ${r.cg_sugerida}`,
-    r.categoria_sugerida && r.confianca_categoria==='alta' && `🏷️ <b>Categoria:</b> ${r.categoria_sugerida}`,
+    r.fornecedor         && `🏢 <b>Fornecedor:</b> ${r.fornecedor}`,
+    r.valor_nf           && `💰 <b>Valor NF:</b> R$ ${parseFloat(r.valor_nf).toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+    r.data_vencimento    && `📅 <b>Vencimento:</b> ${new Date(r.data_vencimento+'T00:00:00').toLocaleDateString('pt-BR')}`,
+    r.mes_referencia     && `📆 <b>Mês ref.:</b> ${mlabel(r.mes_referencia)}`,
+    r.cg_sugerida        && `📍 <b>CG:</b> ${r.cg_sugerida}`,
+    r.categoria_sugerida && `🏷️ <b>Categoria:</b> ${r.categoria_sugerida}`,
   ].filter(Boolean);
-
   document.getElementById('ai-fields-summary').innerHTML = fields.join('<br>');
   document.getElementById('ai-conf-badge').textContent = '✓ Campos preenchidos';
+  document.getElementById('ai-choices').style.display = 'none';
 
-  // Seção de escolhas para campos ambíguos
-  const choicesEl = document.getElementById('ai-choices');
-  if (needChoices.length) {
-    choicesEl.style.display = 'block';
-    choicesEl.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:10px">⚠ Confirme os campos abaixo:</div>` +
-      needChoices.map(ch => `
-        <div class="ai-choice-group">
-          <div class="ai-choice-label">${ch.label}</div>
-          <div class="ai-choices-row">
-            ${ch.options.filter(Boolean).map(opt => `
-              <button class="ai-choice-btn ${opt===ch.sugerida?'selected':''}"
-                onclick="pickChoice('${ch.field}','${opt.replace(/'/g,"\'")}',this)">
-                ${opt}
-              </button>`).join('')}
-          </div>
-        </div>`).join('');
-  } else {
-    choicesEl.style.display = 'none';
-  }
-
-  // Restaura botão
-  const btn = document.getElementById('ai-btn');
-  btn.disabled = false;
+  document.getElementById('ai-btn').disabled = false;
   document.getElementById('ai-btn-txt').textContent = 'Reanalisar documentos';
   document.getElementById('ai-btn-icon').textContent = '✨';
 
   toast('Campos preenchidos pela IA ✨', 'Revise e ajuste se necessário', 'success');
-}
-
-function pickChoice(fieldId, value, btn) {
-  // Seleciona a opção
-  btn.closest('.ai-choices-row').querySelectorAll('.ai-choice-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  const el = document.getElementById(fieldId);
-  if (el) {
-    el.value = value;
-    el.closest('.ff')?.classList.add('field-ai');
-    setTimeout(() => el.closest('.ff')?.classList.remove('field-ai'), 2000);
-  }
 }
 </script>
 </body>
