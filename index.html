@@ -199,6 +199,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .info-box{background:var(--blue-bg);border:1px solid rgba(37,99,235,.15);border-radius:var(--radius-sm);padding:12px 16px;font-size:12.5px;font-weight:600;color:var(--blue);margin-top:12px;line-height:1.5;}
 
 /* EMPTY */
+/* AI STATES */
+.field-ai input,.field-ai select{border-color:var(--purple)!important;background:var(--purple-light)!important;animation:ai-pop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes ai-pop{from{transform:scale(.98);opacity:.7}to{transform:scale(1);opacity:1}}
+.ai-choice-group{margin-bottom:10px;}
+.ai-choice-label{font-size:11.5px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;}
+.ai-choices-row{display:flex;gap:7px;flex-wrap:wrap;}
+.ai-choice-btn{padding:5px 12px;border-radius:999px;border:1.5px solid var(--purple-border);background:var(--surface);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-display);transition:all .15s;}
+.ai-choice-btn:hover,.ai-choice-btn.selected{background:var(--purple);color:#fff;border-color:var(--purple);}
+.ai-loading{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--purple);}
+.ai-loading .spin{width:18px;height:18px;border-width:2px;border-top-color:var(--purple);}
 .emp{padding:48px 24px;text-align:center;}
 .emp-ico{font-size:36px;margin-bottom:10px;}
 .emp-ttl{font-size:14px;font-weight:800;color:var(--text-muted);margin-bottom:4px;font-family:var(--font-display);}
@@ -362,6 +372,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
             <div class="up-sub">PDF, PNG ou JPG · máx. 10 MB por arquivo</div>
             <div class="file-list" id="file-list"></div>
           </div>
+          <!-- AI EXTRACT BUTTON -->
+          <div id="ai-bar" style="display:none;margin-top:14px">
+            <button class="btn btn-p" id="ai-btn" onclick="extractWithAI()" style="width:100%;justify-content:center;gap:10px;padding:13px">
+              <span id="ai-btn-icon">✨</span>
+              <span id="ai-btn-txt">Preencher campos com IA</span>
+            </button>
+          </div>
+          <!-- AI RESULT PANEL -->
+          <div id="ai-panel" style="display:none;margin-top:14px;background:var(--purple-muted);border:1.5px solid var(--purple-border);border-radius:var(--radius);padding:16px 18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <span style="font-size:16px">✨</span>
+              <span style="font-size:13px;font-weight:800;color:var(--purple);font-family:var(--font-display)">Campos preenchidos pela IA</span>
+              <span id="ai-conf-badge" style="margin-left:auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--green-bg);color:var(--green)"></span>
+            </div>
+            <div id="ai-fields-summary" style="font-size:12.5px;color:var(--text-muted);font-weight:600;line-height:1.7"></div>
+            <!-- Campos com baixa confiança -->
+            <div id="ai-choices" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--purple-border)"></div>
+          </div>
         </div>
       </div>
       <div class="form-actions">
@@ -490,6 +518,12 @@ function renderFiles(){
     <div class="file-item"><span>📄</span><span>${f.name}</span>
     <span style="color:var(--text-dim);font-size:11.5px">${(f.size/1024).toFixed(0)} KB</span>
     <span class="rm" onclick="removeFile(${i})">✕</span></div>`).join('');
+  const aiBar = document.getElementById('ai-bar');
+  if (aiBar) aiBar.style.display = S.files.length ? 'block' : 'none';
+  if (!S.files.length) {
+    const panel = document.getElementById('ai-panel');
+    if (panel) panel.style.display = 'none';
+  }
 }
 
 async function submitNF(){
@@ -678,6 +712,215 @@ function showLoad(s){document.getElementById('load-ov').classList.toggle('show',
 document.getElementById('month-input').value = S.mes;
 if(S.gasUrl)setGas(true);
 refreshDash();
+
+// ─── AI EXTRACTION ─────────────────────────────────────────────────────────
+const CG_ADDRESSES = {
+  'Morumbi':       ['morumbi','san martin','dr. cardoso de melo','golden green','rochaverá'],
+  'Tatuapé':       ['tatuapé','tatuape','carrão','carrao'],
+  'Pinheiros':     ['pinheiros','teodoro sampaio','beco do batman'],
+  'Paraíso':       ['paraíso','paraiso','brigadeiro','paulista'],
+  'Alphaville':    ['alphaville','barueri','tambore'],
+  'Anália Franco': ['anália franco','analia franco','tatuapé','vila regente'],
+  'Santana':       ['santana','mandaqui','carandiru'],
+};
+
+async function extractWithAI() {
+  if (!S.files.length) return;
+  const btn = document.getElementById('ai-btn');
+  const btnTxt = document.getElementById('ai-btn-txt');
+  const btnIcon = document.getElementById('ai-btn-icon');
+  btn.disabled = true;
+  btnTxt.textContent = 'Analisando documentos…';
+  btnIcon.innerHTML = '<div class="spin" style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite"></div>';
+
+  try {
+    // Converte arquivos para base64
+    const docs = await Promise.all(S.files.map(f2b));
+
+    // Monta mensagem para a API
+    const content = [
+      ...docs.map(d => ({
+        type: d.type === 'application/pdf' ? 'document' : 'image',
+        source: { type: 'base64', media_type: d.type, data: d.data },
+      })),
+      {
+        type: 'text',
+        text: `Analise este(s) documento(s) que podem ser nota fiscal (NF) e/ou boleto bancário de uma clínica de saúde em São Paulo.
+
+Extraia as seguintes informações e responda SOMENTE em JSON válido, sem texto adicional, sem markdown:
+
+{
+  "fornecedor": "nome completo do fornecedor/emitente da NF",
+  "nf_numero": "número da nota fiscal",
+  "valor_nf": 0.00,
+  "data_vencimento": "YYYY-MM-DD",
+  "mes_referencia": "YYYY-MM",
+  "endereco_destino": "endereço completo do destinatário/tomador do serviço",
+  "descricao_servico": "descrição resumida do serviço prestado",
+  "categoria_sugerida": "categoria mais provável",
+  "categoria_opcoes": ["opção 1", "opção 2"],
+  "confianca_categoria": "alta|media|baixa",
+  "cg_sugerida": "nome da unidade identificada ou vazio se não souber",
+  "confianca_cg": "alta|media|baixa",
+  "observacoes": "qualquer informação relevante adicional"
+}
+
+Categorias possíveis: Aluguel, Condomínio, Contas de Consumo, Despesas Condominiais, Equipamentos, Estacionamento, FGTS, Limpeza e Conservação, Manutenção, Manutenção Corretiva, Materiais de Construção, Persianas, Reparo, Serviços Administrativos, Tributos, Vigilância, Outros.
+
+Unidades possíveis: Morumbi (12º), Morumbi (14º), Morumbi (16º), Tatuapé, Pinheiros, Paraíso, Alphaville (3º), Alphaville (9º), Anália Franco, Santana.
+
+Para identificar a unidade, use o endereço do destinatário/tomador do serviço na nota. Se houver múltiplos andares do mesmo prédio (Morumbi 12º/14º/16º ou Alphaville 3º/9º), indique confianca_cg como "media" e liste as opções em categoria_opcoes.
+
+O valor_nf deve ser o valor TOTAL da nota fiscal (não do boleto que pode incluir impostos adicionais).`
+      }
+    ];
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw = data.content?.find(b => b.type === 'text')?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    applyAIResult(result);
+  } catch(e) {
+    toast('Erro na extração IA', e.message, 'error');
+    btn.disabled = false;
+    btnTxt.textContent = 'Tentar novamente';
+    btnIcon.textContent = '✨';
+  }
+}
+
+function applyAIResult(r) {
+  // Preenche campos com confiança alta
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el || !val) return;
+    el.value = val;
+    el.closest('.ff')?.classList.add('field-ai');
+    setTimeout(() => el.closest('.ff')?.classList.remove('field-ai'), 2000);
+  };
+
+  // Fornecedor — tenta match com lista, senão usa "Outro"
+  if (r.fornecedor) {
+    const sel = document.getElementById('f-forn');
+    const opts = [...sel.options].map(o => o.value);
+    const match = opts.find(o => o.toLowerCase().includes(r.fornecedor.toLowerCase().slice(0,10)));
+    if (match) {
+      sel.value = match;
+    } else {
+      sel.value = 'Outro (digitar)';
+      document.getElementById('outro-w').style.display = 'flex';
+      set('f-forn-o', r.fornecedor);
+    }
+    sel.closest('.ff')?.classList.add('field-ai');
+    setTimeout(() => sel.closest('.ff')?.classList.remove('field-ai'), 2000);
+  }
+
+  if (r.nf_numero) set('f-nf', r.nf_numero);
+  if (r.valor_nf)  set('f-val', r.valor_nf);
+  if (r.data_vencimento) set('f-venc', r.data_vencimento);
+
+  // Mês de referência → atualiza o mês do portal
+  if (r.mes_referencia) {
+    S.mes = r.mes_referencia;
+    setMlabel(r.mes_referencia);
+    document.getElementById('month-input').value = r.mes_referencia;
+  }
+
+  // Comentário com descrição do serviço
+  if (r.descricao_servico) set('f-com', r.descricao_servico);
+
+  // CG — preenche direto se confiança alta, senão adiciona à seção de escolhas
+  const needChoices = [];
+
+  if (r.cg_sugerida && r.confianca_cg === 'alta') {
+    set('f-cg', r.cg_sugerida);
+  } else if (r.cg_sugerida) {
+    needChoices.push({
+      label: 'Qual unidade (CG)?',
+      field: 'f-cg',
+      options: r.categoria_opcoes?.length ? r.categoria_opcoes : [r.cg_sugerida, ''],
+      sugerida: r.cg_sugerida,
+    });
+  }
+
+  // Categoria — preenche direto se alta, senão oferece opções
+  if (r.categoria_sugerida && r.confianca_categoria === 'alta') {
+    set('f-cat', r.categoria_sugerida);
+  } else if (r.categoria_sugerida) {
+    needChoices.push({
+      label: 'Qual categoria?',
+      field: 'f-cat',
+      options: r.categoria_opcoes?.length ? r.categoria_opcoes : [r.categoria_sugerida],
+      sugerida: r.categoria_sugerida,
+    });
+  }
+
+  // Mostra painel de resultado
+  const panel = document.getElementById('ai-panel');
+  panel.style.display = 'block';
+
+  const fields = [
+    r.fornecedor       && `🏢 <b>Fornecedor:</b> ${r.fornecedor}`,
+    r.valor_nf         && `💰 <b>Valor NF:</b> R$ ${parseFloat(r.valor_nf).toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+    r.data_vencimento  && `📅 <b>Vencimento:</b> ${new Date(r.data_vencimento+'T00:00:00').toLocaleDateString('pt-BR')}`,
+    r.mes_referencia   && `📆 <b>Mês ref.:</b> ${mlabel(r.mes_referencia)}`,
+    r.cg_sugerida && r.confianca_cg==='alta' && `📍 <b>CG:</b> ${r.cg_sugerida}`,
+    r.categoria_sugerida && r.confianca_categoria==='alta' && `🏷️ <b>Categoria:</b> ${r.categoria_sugerida}`,
+  ].filter(Boolean);
+
+  document.getElementById('ai-fields-summary').innerHTML = fields.join('<br>');
+  document.getElementById('ai-conf-badge').textContent = '✓ Campos preenchidos';
+
+  // Seção de escolhas para campos ambíguos
+  const choicesEl = document.getElementById('ai-choices');
+  if (needChoices.length) {
+    choicesEl.style.display = 'block';
+    choicesEl.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:10px">⚠ Confirme os campos abaixo:</div>` +
+      needChoices.map(ch => `
+        <div class="ai-choice-group">
+          <div class="ai-choice-label">${ch.label}</div>
+          <div class="ai-choices-row">
+            ${ch.options.filter(Boolean).map(opt => `
+              <button class="ai-choice-btn ${opt===ch.sugerida?'selected':''}"
+                onclick="pickChoice('${ch.field}','${opt.replace(/'/g,"\'")}',this)">
+                ${opt}
+              </button>`).join('')}
+          </div>
+        </div>`).join('');
+  } else {
+    choicesEl.style.display = 'none';
+  }
+
+  // Restaura botão
+  const btn = document.getElementById('ai-btn');
+  btn.disabled = false;
+  document.getElementById('ai-btn-txt').textContent = 'Reanalisar documentos';
+  document.getElementById('ai-btn-icon').textContent = '✨';
+
+  toast('Campos preenchidos pela IA ✨', 'Revise e ajuste se necessário', 'success');
+}
+
+function pickChoice(fieldId, value, btn) {
+  // Seleciona a opção
+  btn.closest('.ai-choices-row').querySelectorAll('.ai-choice-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const el = document.getElementById(fieldId);
+  if (el) {
+    el.value = value;
+    el.closest('.ff')?.classList.add('field-ai');
+    setTimeout(() => el.closest('.ff')?.classList.remove('field-ai'), 2000);
+  }
+}
 </script>
 </body>
 </html>
