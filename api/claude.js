@@ -10,38 +10,38 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  // Debug: retorna info sobre a chave sem expô-la
+  if (!apiKey) {
+    return res.status(200).json({ ok: false, error: 'GEMINI_API_KEY não encontrada nas variáveis de ambiente' });
+  }
+
   try {
     const { docs, prompt } = req.body;
-    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    // Monta content no formato OpenAI Vision (compatível com OpenRouter)
-    const content = [
+    const geminiParts = [
       ...docs.map(d => ({
-        type: 'image_url',
-        image_url: { url: `data:${d.type};base64,${d.data}` }
+        inlineData: { mimeType: d.type, data: d.data }
       })),
-      { type: 'text', text: prompt }
+      { text: prompt }
     ];
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://portal-nfs.vercel.app',
-        'X-Title': 'Portal NFs Genial Care',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemma-3-27b-it:free',
-        messages: [{ role: 'user', content }],
-        max_tokens: 2000,
-        temperature: 0.1,
+        contents: [{ parts: geminiParts }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2000 },
       }),
     });
 
     const data = await response.json();
-    if (data.error) return res.status(200).json({ ok: false, error: data.error.message || JSON.stringify(data.error) });
-    const text = data.choices?.[0]?.message?.content || '';
+    if (data.error) return res.status(200).json({ ok: false, error: data.error.message });
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!text) return res.status(200).json({ ok: false, error: 'Resposta vazia do Gemini' });
     return res.status(200).json({ ok: true, text });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
