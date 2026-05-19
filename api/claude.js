@@ -11,41 +11,38 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { parts } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    const { docs, prompt } = req.body;
+    const apiKey = process.env.MISTRAL_API_KEY;
 
-    // Gemini aceita PDF via fileData ou inline_data com mime_type application/pdf
-    // Monta parts corretamente
-    const geminiParts = parts.map(p => {
-      if (p.inline_data) {
-        return {
-          inlineData: {
-            mimeType: p.inline_data.mime_type,
-            data: p.inline_data.data,
-          }
-        };
-      }
-      return { text: p.text };
-    });
+    // Mistral aceita PDFs e imagens como base64 no content
+    const content = [
+      ...docs.map(d => ({
+        type: d.type === 'application/pdf' ? 'document_url' : 'image_url',
+        ...(d.type === 'application/pdf'
+          ? { document_url: `data:application/pdf;base64,${d.data}` }
+          : { image_url: `data:${d.type};base64,${d.data}` }
+        )
+      })),
+      { type: 'text', text: prompt }
+    ];
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        contents: [{ parts: geminiParts }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 2000 },
+        model: 'mistral-small-latest',
+        messages: [{ role: 'user', content }],
+        max_tokens: 2000,
+        temperature: 0.1,
       }),
     });
 
     const data = await response.json();
-
-    // Log para debug
-    if (data.error) {
-      return res.status(200).json({ ok: false, error: data.error.message });
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (data.error) return res.status(200).json({ ok: false, error: data.error.message || JSON.stringify(data.error) });
+    const text = data.choices?.[0]?.message?.content || '';
     return res.status(200).json({ ok: true, text });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
