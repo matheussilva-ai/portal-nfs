@@ -308,6 +308,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="stat-card sc-yellow"><div class="sc-bar"></div><div class="sc-icon">⏳</div><div class="sc-label">Pendente de envio</div><div class="sc-value" id="s-pend">—</div><div class="sc-meta">notas em aberto</div></div>
         <div class="stat-card sc-blue"><div class="sc-bar"></div><div class="sc-icon">📄</div><div class="sc-label">NFs lançadas</div><div class="sc-value" id="s-cnt">—</div><div class="sc-meta" id="s-avl">—</div></div>
       </div>
+      <!-- Mini budget pills por CG -->
+      <div id="cg-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px"></div>
       <div class="sec-card">
         <div class="sec-head">
           <div class="sec-title"><div class="sec-icon">📈</div>Budget por CG</div>
@@ -512,6 +514,9 @@ function onMonthChange(v){
   if(!v) return;
   S.mes = v;
   setMlabel(v);
+  // Limpa cache do mês anterior para não misturar dados
+  S.nfs = [];
+  S.budget = [];
   refreshDash();
 }
 
@@ -628,6 +633,27 @@ function renderBudget(mn){
   const tb=document.getElementById('bud-body');
   if(!cgs.length){tb.innerHTML=`<tr><td colspan="6"><div class="emp"><div class="emp-ico">📊</div><div class="emp-ttl">Sem dados de budget</div><div class="emp-sub">Verifique a aba 05.2 Budget FACILITIES</div></div></td></tr>`;return;}
   const cgS=cg=>cg;
+
+  // Renderiza pills de % por CG no topo
+  const pillsEl = document.getElementById('cg-pills');
+  if (pillsEl) {
+    pillsEl.innerHTML = cgs.map(cg => {
+      const te  = S.budget.find(b=>b.cg===cg&&b.isTotal)||{};
+      const bt  = te.budget||0;
+      const gt  = gm[`${cg}||__T__`]||0;
+      if (bt === 0 && gt === 0) return '';
+      const pct = bt>0 ? Math.min(Math.round((gt/bt)*100),100) : null;
+      const color = pct === null ? 'var(--text-dim)' : pct>=100 ? 'var(--red)' : pct>=80 ? 'var(--yellow)' : 'var(--green)';
+      const bg    = pct === null ? 'var(--surface2)' : pct>=100 ? 'var(--red-bg)' : pct>=80 ? 'var(--yellow-bg)' : 'var(--green-bg)';
+      const label = pct !== null ? `${pct}%` : '—';
+      const cgShort = cg.replace('CG ','');
+      return `<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:${bg};border:1px solid ${color}20;font-size:12px;font-weight:700;font-family:var(--font-display)">
+        <span style="color:var(--text-muted)">${cgShort}</span>
+        <span style="color:${color}">${label}</span>
+      </div>`;
+    }).join('');
+  }
+
   let h='';
   cgs.forEach(cg=>{
     const te=S.budget.find(b=>b.cg===cg&&b.isTotal)||{};
