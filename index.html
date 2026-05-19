@@ -341,7 +341,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           </div>
           <div class="fg3" style="margin-top:16px">
             <div class="ff"><label>Unidade (CG) *</label>
-              <select id="f-cg"><option value="">Selecione…</option><option>Morumbi</option><option>Pinheiros</option><option>Tatuapé</option><option>Paraíso</option><option>Alphaville</option><option>Anália Franco</option><option>Santana</option><option>Escritório</option></select>
+              <select id="f-cg"><option value="">Selecione…</option><option>CG Morumbi</option><option>CG Pinheiros</option><option>CG Tatuapé</option><option>CG Paraíso</option><option>CG Alphaville</option><option>CG Anália Franco</option><option>CG Santana</option><option>Escritório</option><option>MindPlace</option></select>
             </div>
             <div class="ff"><label>Categoria *</label>
               <select id="f-cat"><option value="">Selecione…</option><option>Aluguel</option><option>Condomínio</option><option>Contas de Consumo</option><option>Despesas Condominiais</option><option>Eletrônicos</option><option>Encargos Sociais e IRRF</option><option>Equipamentos</option><option>Estacionamento</option><option>FGTS</option><option>Folha de Pagamento</option><option>Higienização de estofados</option><option>IPTU</option><option>Limpeza</option><option>Limpeza e Conservação</option><option>Manutenção</option><option>Manutenção Corretiva</option><option>Materiais de Construção</option><option>Persianas</option><option>Reparo</option><option>Serviços Administrativos</option><option>Tributos</option><option>Vigilância</option><option>Outros</option></select>
@@ -405,7 +405,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <section class="page" id="page-lista">
       <div class="filter-bar">
         <input class="fi" type="text" id="fb-s" placeholder="🔍  Buscar fornecedor, nº NF…" oninput="renderLista()">
-        <select class="fs" id="fb-cg" onchange="renderLista()"><option value="">Todas as CGs</option><option>Morumbi</option><option>Pinheiros</option><option>Tatuapé</option><option>Paraíso</option><option>Alphaville</option><option>Anália Franco</option><option>Santana</option><option>Escritório</option></select>
+        <select class="fs" id="fb-cg" onchange="renderLista()"><option value="">Todas as CGs</option><option>CG Morumbi</option><option>CG Pinheiros</option><option>CG Tatuapé</option><option>CG Paraíso</option><option>CG Alphaville</option><option>CG Anália Franco</option><option>CG Santana</option><option>Escritório</option><option>MindPlace</option></select>
         <select class="fs" id="fb-st" onchange="renderLista()"><option value="">Todos os status</option><option>Enviado</option><option>Pendente</option></select>
         <select class="fs" id="fb-tp" onchange="renderLista()"><option value="">Todos os tipos</option><option>Recorrente</option><option>Avulso</option></select>
       </div>
@@ -443,6 +443,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   </div>
 </main>
+
+<!-- VALIDATION MODAL -->
+<div id="val-modal" style="display:none;position:fixed;inset:0;background:rgba(26,21,53,0.6);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:32px 36px;max-width:400px;width:90%;box-shadow:var(--shadow-lg);text-align:center">
+    <div style="width:56px;height:56px;background:var(--red-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 16px">⚠️</div>
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px">Campos obrigatórios</div>
+    <div style="font-size:13.5px;color:var(--text-muted);font-weight:600;margin-bottom:20px">Preencha os campos abaixo antes de lançar a NF:</div>
+    <div id="val-modal-list" style="text-align:left;margin-bottom:24px"></div>
+    <button class="btn btn-p" onclick="closeValModal()" style="width:100%;justify-content:center">Entendi, vou preencher</button>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div id="ok-modal" style="display:none;position:fixed;inset:0;background:rgba(26,21,53,0.6);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:32px 36px;max-width:440px;width:90%;box-shadow:var(--shadow-lg);text-align:center">
+    <div style="width:64px;height:64px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;animation:ai-pop .4s cubic-bezier(.34,1.56,.64,1)">✅</div>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:var(--green);margin-bottom:8px">NF lançada com sucesso!</div>
+    <div id="ok-modal-details" style="font-size:13.5px;color:var(--text-muted);font-weight:600;line-height:1.8;margin-bottom:24px"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-g" onclick="closeOkModal();goTo('lista')" style="flex:1;justify-content:center">📋 Ver notas</button>
+      <button class="btn btn-p" onclick="closeOkModal()" style="flex:1;justify-content:center">➕ Nova NF</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"><div id="t-msg"></div><div class="t-sub" id="t-sub"></div></div>
 <div class="load-ov" id="load-ov"><div class="spin-w"><div class="spin"></div><div class="spin-lbl">Aguarde…</div></div></div>
@@ -538,11 +562,11 @@ async function submitNF(){
   const venc=document.getElementById('f-venc').value;
   const com=document.getElementById('f-com').value.trim();
   const erros=[];
-  if(!forn)erros.push('fornecedor');if(!nf)erros.push('nº NF');
-  if(!val||val<=0)erros.push('valor');if(!cg)erros.push('unidade');
-  if(!cat)erros.push('categoria');if(!venc)erros.push('vencimento');
+  if(!forn)erros.push('Fornecedor');if(!nf)erros.push('Nº NF');
+  if(!val||val<=0)erros.push('Valor (R$)');if(!cg)erros.push('Unidade (CG)');
+  if(!cat)erros.push('Categoria');if(!venc)erros.push('Data de vencimento');
   const hint=document.getElementById('f-hint');
-  if(erros.length){hint.textContent=`⚠ Preencha: ${erros.join(', ')}`;hint.className='form-hint error';return;}
+  if(erros.length){hint.textContent='* Campos obrigatórios';hint.className='form-hint';showValidationModal(erros);return;}
   hint.textContent='* Campos obrigatórios';hint.className='form-hint';
   showLoad(true);
   const fb64=await Promise.all(S.files.map(f2b));
@@ -551,7 +575,7 @@ async function submitNF(){
     const res=await fetch(S.gasUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
     const json=await res.json();showLoad(false);
     if(json.ok){
-      toast('NF lançada com sucesso! ✓',`${forn} · R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}`,'success');
+      showSuccessModal(forn, val, cg, cat);
       S.nfs.unshift({...payload,dataLancamento:new Date().toISOString().slice(0,10),driveUrl:json.driveUrl||''});
       localStorage.setItem('nfs_cache',JSON.stringify(S.nfs.slice(0,200)));
       clearForm();refreshDash();
@@ -708,6 +732,34 @@ function toast(msg,sub='',type=''){
   _tt=setTimeout(()=>t.classList.remove('show'),4000);
 }
 function showLoad(s){document.getElementById('load-ov').classList.toggle('show',s);}
+
+function showValidationModal(erros) {
+  const modal = document.getElementById('val-modal');
+  const list  = document.getElementById('val-modal-list');
+  list.innerHTML = erros.map(e => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--red-bg);border-radius:var(--radius-sm);margin-bottom:6px;font-size:13px;font-weight:700;color:var(--red)">
+      <span>✕</span><span>${e}</span>
+    </div>`).join('');
+  modal.style.display = 'flex';
+}
+function closeValModal() {
+  document.getElementById('val-modal').style.display = 'none';
+}
+function showSuccessModal(forn, val, cg, cat) {
+  const modal   = document.getElementById('ok-modal');
+  const details = document.getElementById('ok-modal-details');
+  details.innerHTML = `
+    🏢 <b>Fornecedor:</b> ${forn}<br>
+    💰 <b>Valor:</b> R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}<br>
+    📍 <b>Unidade:</b> ${cg}<br>
+    🏷️ <b>Categoria:</b> ${cat}<br>
+    📅 <b>Lançado em:</b> ${new Date().toLocaleDateString('pt-BR')}
+  `;
+  modal.style.display = 'flex';
+}
+function closeOkModal() {
+  document.getElementById('ok-modal').style.display = 'none';
+}
 
 document.getElementById('month-input').value = S.mes;
 if(S.gasUrl)setGas(true);
