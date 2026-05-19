@@ -12,28 +12,27 @@ export default async function handler(req, res) {
 
   try {
     const { docs, prompt } = req.body;
-    const apiKey = process.env.MISTRAL_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    // Mistral aceita PDFs e imagens como base64 no content
+    // Monta content no formato OpenAI Vision (compatível com OpenRouter)
     const content = [
       ...docs.map(d => ({
-        type: d.type === 'application/pdf' ? 'document_url' : 'image_url',
-        ...(d.type === 'application/pdf'
-          ? { document_url: `data:application/pdf;base64,${d.data}` }
-          : { image_url: `data:${d.type};base64,${d.data}` }
-        )
+        type: 'image_url',
+        image_url: { url: `data:${d.type};base64,${d.data}` }
       })),
       { type: 'text', text: prompt }
     ];
 
-    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://portal-nfs.vercel.app',
+        'X-Title': 'Portal NFs Genial Care',
       },
       body: JSON.stringify({
-        model: 'mistral-small-latest',
+        model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
         messages: [{ role: 'user', content }],
         max_tokens: 2000,
         temperature: 0.1,
