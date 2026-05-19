@@ -803,6 +803,7 @@ Extraia as seguintes informações e responda SOMENTE em JSON válido, sem texto
   "descricao_servico": "descrição resumida do serviço prestado",
   "categoria_sugerida": "categoria mais provável",
   "categoria_opcoes": ["opção 1", "opção 2"],
+  "cg_opcoes": ["opção CG 1", "opção CG 2"],
   "confianca_categoria": "alta|media|baixa",
   "cg_sugerida": "nome da unidade identificada ou vazio se não souber",
   "confianca_cg": "alta|media|baixa",
@@ -887,22 +888,30 @@ function applyAIResult(r) {
   if (r.cg_sugerida && r.confianca_cg === 'alta') {
     set('f-cg', r.cg_sugerida);
   } else if (r.cg_sugerida) {
+    // Usa cg_opcoes se disponível, senão monta lista das CGs conhecidas
+    const cgOpts = r.cg_opcoes?.length ? r.cg_opcoes : [
+      r.cg_sugerida,
+      'CG Morumbi','CG Pinheiros','CG Tatuapé','CG Paraíso',
+      'CG Alphaville','CG Anália Franco','CG Santana','Escritório'
+    ].filter((v,i,a) => v && a.indexOf(v)===i).slice(0,5);
     needChoices.push({
       label: 'Qual unidade (CG)?',
       field: 'f-cg',
-      options: r.categoria_opcoes?.length ? r.categoria_opcoes : [r.cg_sugerida, ''],
+      options: cgOpts,
       sugerida: r.cg_sugerida,
     });
   }
 
   // Categoria — preenche direto se alta, senão oferece opções
+  // IMPORTANTE: usa cg_opcoes separado de categoria_opcoes para não misturar
   if (r.categoria_sugerida && r.confianca_categoria === 'alta') {
     set('f-cat', r.categoria_sugerida);
   } else if (r.categoria_sugerida) {
+    const catOpts = r.categoria_opcoes?.length ? r.categoria_opcoes : [r.categoria_sugerida];
     needChoices.push({
       label: 'Qual categoria?',
       field: 'f-cat',
-      options: r.categoria_opcoes?.length ? r.categoria_opcoes : [r.categoria_sugerida],
+      options: catOpts,
       sugerida: r.categoria_sugerida,
     });
   }
