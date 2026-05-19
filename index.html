@@ -775,18 +775,12 @@ O valor_nf deve ser o valor TOTAL da nota fiscal (não do boleto que pode inclui
       }
     ];
 
-    // Monta parts no formato Gemini
-    const parts = [
-      ...docs.map(d => ({
-        inline_data: { mime_type: d.type, data: d.data }
-      })),
-      { text: content.find(x => x.type === 'text').text }
-    ];
+    const prompt = content.find(x => x.type === 'text').text;
 
     const resp = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parts })
+      body: JSON.stringify({ docs, prompt })
     });
 
     const data = await resp.json();
