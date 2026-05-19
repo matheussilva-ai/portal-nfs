@@ -780,15 +780,19 @@ O valor_nf deve ser o valor TOTAL da nota fiscal (não do boleto que pode inclui
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 2000,
         messages: [{ role: 'user', content }]
       })
     });
 
     const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
     const raw = data.content?.find(b => b.type === 'text')?.text || '';
+    if (!raw) throw new Error('Resposta vazia da API. Tente com um arquivo menor.');
     const clean = raw.replace(/```json|```/g, '').trim();
-    const result = JSON.parse(clean);
+    let result;
+    try { result = JSON.parse(clean); }
+    catch(pe) { throw new Error('Não foi possível ler o documento. Verifique se o PDF é legível e tente novamente.'); }
 
     applyAIResult(result);
   } catch(e) {
