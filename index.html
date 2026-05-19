@@ -737,15 +737,7 @@ async function extractWithAI() {
     // Converte arquivos para base64
     const docs = await Promise.all(S.files.map(f2b));
 
-    // Monta mensagem para a API
-    const content = [
-      ...docs.map(d => ({
-        type: d.type === 'application/pdf' ? 'document' : 'image',
-        source: { type: 'base64', media_type: d.type, data: d.data },
-      })),
-      {
-        type: 'text',
-        text: `Analise este(s) documento(s) que podem ser nota fiscal (NF) e/ou boleto bancário de uma clínica de saúde em São Paulo.
+    const prompt = `Analise este(s) documento(s) que podem ser nota fiscal (NF) e/ou boleto bancário de uma clínica de saúde em São Paulo.
 
 Extraia as seguintes informações e responda SOMENTE em JSON válido, sem texto adicional, sem markdown:
 
@@ -769,13 +761,9 @@ Categorias possíveis: Aluguel, Condomínio, Contas de Consumo, Despesas Condomi
 
 Unidades possíveis: Morumbi (12º), Morumbi (14º), Morumbi (16º), Tatuapé, Pinheiros, Paraíso, Alphaville (3º), Alphaville (9º), Anália Franco, Santana.
 
-Para identificar a unidade, use o endereço do destinatário/tomador do serviço na nota. Se houver múltiplos andares do mesmo prédio (Morumbi 12º/14º/16º ou Alphaville 3º/9º), indique confianca_cg como "media" e liste as opções em categoria_opcoes.
+Para identificar a unidade, use o endereço do destinatário/tomador do serviço na nota. Se houver múltiplos andares do mesmo prédio, indique confianca_cg como "media".
 
-O valor_nf deve ser o valor TOTAL da nota fiscal (não do boleto que pode incluir impostos adicionais).`
-      }
-    ];
-
-    const prompt = content.find(x => x.type === 'text').text;
+O valor_nf deve ser o valor TOTAL da nota fiscal.`;
 
     const resp = await fetch('/api/claude', {
       method: 'POST',
