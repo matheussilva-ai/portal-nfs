@@ -13,18 +13,38 @@ export default async function handler(req, res) {
   try {
     const { parts } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
+    // Gemini aceita PDF via fileData ou inline_data com mime_type application/pdf
+    // Monta parts corretamente
+    const geminiParts = parts.map(p => {
+      if (p.inline_data) {
+        return {
+          inlineData: {
+            mimeType: p.inline_data.mime_type,
+            data: p.inline_data.data,
+          }
+        };
+      }
+      return { text: p.text };
+    });
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts }],
+        contents: [{ parts: geminiParts }],
         generationConfig: { temperature: 0.1, maxOutputTokens: 2000 },
       }),
     });
 
     const data = await response.json();
+
+    // Log para debug
+    if (data.error) {
+      return res.status(200).json({ ok: false, error: data.error.message });
+    }
+
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     return res.status(200).json({ ok: true, text });
   } catch (err) {
