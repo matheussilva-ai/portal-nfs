@@ -270,6 +270,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="nav-lbl">Menu</div>
     <a class="nav-item active" data-page="dashboard" href="#"><span class="nav-icon">📊</span>Dashboard</a>
     <a class="nav-item" data-page="lancar" href="#"><span class="nav-icon">➕</span>Lançar NF</a>
+    <a class="nav-item" data-page="massa" href="#"><span class="nav-icon">📦</span>Lançamento em massa</a>
     <a class="nav-item" data-page="lista" href="#"><span class="nav-icon">📋</span>Notas lançadas</a>
     <div class="nav-lbl">Sistema</div>
     <a class="nav-item" data-page="config" href="#"><span class="nav-icon">⚙️</span>Configurar</a>
@@ -284,6 +285,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="mob-nav">
     <a class="mob-item active" data-page="dashboard" href="#"><span class="mob-icon">📊</span>Dashboard</a>
     <a class="mob-item" data-page="lancar" href="#"><span class="mob-icon">➕</span>Lançar</a>
+    <a class="mob-item" data-page="massa" href="#"><span class="mob-icon">📦</span>Massa</a>
     <a class="mob-item" data-page="lista" href="#"><span class="mob-icon">📋</span>Notas</a>
     <a class="mob-item" data-page="config" href="#"><span class="mob-icon">⚙️</span>Config</a>
   </div>
@@ -415,6 +417,81 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="sec-head"><div class="sec-title"><div class="sec-icon">📋</div>Notas do mês</div><span class="sec-badge" id="lista-cnt">— registros</span></div>
         <table class="nt"><thead><tr><th>Nº NF</th><th>Fornecedor</th><th>CG</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Tipo</th><th>Status</th><th>Anexo</th></tr></thead>
         <tbody id="lista-body"><tr><td colspan="9"><div class="emp"><div class="emp-ico">⏳</div><div class="emp-ttl">Carregando…</div></div></td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- MASSA -->
+    <section class="page" id="page-massa">
+      <!-- STEP 1: Upload -->
+      <div id="massa-step1">
+        <div class="fb">
+          <div class="fb-head"><div class="fb-step">1</div><div class="fb-title">Upload das notas fiscais</div></div>
+          <div class="fb-body">
+            <div class="upz" id="massa-upz">
+              <input type="file" id="massa-files" multiple accept=".pdf,.png,.jpg,.jpeg" onchange="massaHandleFiles(this.files)">
+              <div class="up-icon">📦</div>
+              <div class="up-title">Arraste múltiplos PDFs aqui ou clique para selecionar</div>
+              <div class="up-sub">Selecione quantas NFs quiser · PDF, PNG ou JPG · máx. 10 MB por arquivo</div>
+              <div class="file-list" id="massa-file-list"></div>
+            </div>
+            <div id="massa-ai-bar" style="display:none;margin-top:14px">
+              <button class="btn btn-p" id="massa-btn" onclick="massaProcessar()" style="width:100%;justify-content:center;padding:13px">
+                <span id="massa-btn-icon">✨</span>
+                <span id="massa-btn-txt">Processar com IA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Revisão -->
+      <div id="massa-step2" style="display:none">
+        <!-- Progresso -->
+        <div id="massa-progress-bar" style="display:none;margin-bottom:20px">
+          <div class="sec-card" style="padding:20px 24px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:700;color:var(--text)" id="massa-progress-label">Processando...</div>
+              <div style="font-size:12px;font-weight:700;color:var(--purple)" id="massa-progress-count">0/0</div>
+            </div>
+            <div style="height:8px;background:var(--surface2);border-radius:999px;overflow:hidden">
+              <div id="massa-progress-fill" style="height:100%;background:var(--purple);border-radius:999px;width:0%;transition:width .4s ease"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de revisão -->
+        <div class="sec-card" id="massa-table-card" style="display:none">
+          <div class="sec-head">
+            <div class="sec-title"><div class="sec-icon">📋</div>Revisão das notas</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="sec-badge" id="massa-resumo">— NFs</span>
+              <button class="btn btn-ghost btn-sm" onclick="massaReset()">← Nova seleção</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:900px">
+              <thead>
+                <tr>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">#</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Arquivo</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Fornecedor</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">CG</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Categoria</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Valor</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Vencimento</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Status</th>
+                </tr>
+              </thead>
+              <tbody id="massa-tbody"></tbody>
+            </table>
+          </div>
+          <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted)" id="massa-footer-info">—</div>
+            <button class="btn btn-p" id="massa-lancar-btn" onclick="massaLancarTodos()" style="gap:10px">
+              <span>🚀</span><span id="massa-lancar-txt">Lançar todas</span>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -790,6 +867,274 @@ function closeOkModal() {
 document.getElementById('month-input').value = S.mes;
 if(S.gasUrl)setGas(true);
 refreshDash();
+
+// ─── LANÇAMENTO EM MASSA ────────────────────────────────────────────────────
+const M = {
+  files: [],    // File objects
+  results: [],  // { file, data, status, error, selected }
+};
+
+const CG_OPTS = ['CG Morumbi','CG Pinheiros','CG Tatuapé','CG Paraíso','CG Alphaville','CG Anália Franco','CG Santana','Escritório','MindPlace'];
+const CAT_OPTS = ['Limpeza | Serviços de Terceiros','Segurança | Serviços de Terceiros','Ar-condicionado | Manutenção Preventiva','Serviços Gerais | Manutenção Corretiva','Materiais/Equipamentos | Manutenção Corretiva','Melhorias | Obras e Benfeitorias','Enxoval da Casa Genial - Mobiliário','Enxoval da Casa Genial - Clínico','Obras e Benfeitorias - Expansão','Licenças e Regularizações - Facilities','Garantias Locatícias - Facilities','Frete de envio de equipamentos'];
+
+// Drag & drop
+const mUpz = document.getElementById('massa-upz');
+if(mUpz) {
+  mUpz.addEventListener('dragover', e => { e.preventDefault(); mUpz.classList.add('drag-over'); });
+  mUpz.addEventListener('dragleave', () => mUpz.classList.remove('drag-over'));
+  mUpz.addEventListener('drop', e => { e.preventDefault(); mUpz.classList.remove('drag-over'); massaHandleFiles(e.dataTransfer.files); });
+}
+
+function massaHandleFiles(files) {
+  M.files = Array.from(files).filter(f => f.size <= 10*1024*1024);
+  const list = document.getElementById('massa-file-list');
+  list.innerHTML = M.files.map((f,i) => `
+    <div class="file-item">
+      <span>📄</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+      <span style="color:var(--text-dim);font-size:11px">${(f.size/1024).toFixed(0)} KB</span>
+    </div>`).join('');
+  const bar = document.getElementById('massa-ai-bar');
+  if(bar) bar.style.display = M.files.length ? 'block' : 'none';
+  document.getElementById('massa-btn-txt').textContent = `Processar ${M.files.length} NF${M.files.length!==1?'s':''} com IA`;
+}
+
+async function massaProcessar() {
+  if(!M.files.length) return;
+  const btn = document.getElementById('massa-btn');
+  btn.disabled = true;
+
+  // Mostra step 2
+  document.getElementById('massa-step2').style.display = 'block';
+  document.getElementById('massa-progress-bar').style.display = 'block';
+  document.getElementById('massa-table-card').style.display = 'none';
+
+  M.results = M.files.map(f => ({ file: f, data: null, status: 'pending', error: null, selected: true }));
+
+  // Processa em paralelo (máx 3 por vez para não sobrecarregar)
+  const total = M.files.length;
+  let done = 0;
+
+  function updateProgress() {
+    done++;
+    const pct = Math.round((done/total)*100);
+    document.getElementById('massa-progress-fill').style.width = pct + '%';
+    document.getElementById('massa-progress-count').textContent = `${done}/${total}`;
+    document.getElementById('massa-progress-label').textContent = done < total ? `Processando NF ${done+1} de ${total}…` : 'Concluído!';
+  }
+
+  // Processa em lotes de 2 para não sobrecarregar a API
+  for(let i = 0; i < M.files.length; i += 2) {
+    const batch = M.files.slice(i, i+2);
+    await Promise.all(batch.map(async (file, bIdx) => {
+      const idx = i + bIdx;
+      try {
+        const b64 = await f2b(file);
+        const resp = await fetch('/api/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            docs: [{ type: b64.type, data: b64.data }],
+            prompt: `Analise esta nota fiscal e responda SOMENTE em JSON válido sem markdown:
+{
+  "fornecedor": "nome do emitente",
+  "nf_numero": "número da NF",
+  "valor_nf": 0.00,
+  "data_vencimento": "YYYY-MM-DD",
+  "mes_referencia": "YYYY-MM",
+  "cg_sugerida": "unidade identificada pelo endereço do destinatário",
+  "confianca_cg": "alta|media|baixa",
+  "categoria_sugerida": "categoria do serviço",
+  "descricao_servico": "descrição resumida"
+}
+Unidades: CG Morumbi, CG Pinheiros, CG Tatuapé, CG Paraíso, CG Alphaville, CG Anália Franco, CG Santana, Escritório.
+Categorias: ${CAT_OPTS.join(', ')}.`
+          })
+        });
+        const json = await resp.json();
+        if(!json.ok) throw new Error(json.error);
+        const raw = json.text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+        const result = JSON.parse(raw);
+        M.results[idx] = { ...M.results[idx], data: result, status: result.confianca_cg === 'alta' ? 'ok' : 'review' };
+      } catch(e) {
+        M.results[idx] = { ...M.results[idx], status: 'error', error: e.message };
+      }
+      updateProgress();
+    }));
+  }
+
+  // Renderiza tabela
+  btn.disabled = false;
+  document.getElementById('massa-progress-bar').style.display = 'none';
+  document.getElementById('massa-table-card').style.display = 'block';
+  renderMassaTabela();
+}
+
+function renderMassaTabela() {
+  const ok = M.results.filter(r => r.status !== 'error').length;
+  const err = M.results.filter(r => r.status === 'error').length;
+  document.getElementById('massa-resumo').textContent = `${ok} prontas${err ? ' · '+err+' com erro' : ''}`;
+  document.getElementById('massa-footer-info').textContent = `${M.results.filter(r=>r.selected && r.status!=='error').length} NFs selecionadas para lançar`;
+  document.getElementById('massa-lancar-txt').textContent = `🚀 Lançar ${M.results.filter(r=>r.selected&&r.status!=='error').length} NFs`;
+
+  const tbody = document.getElementById('massa-tbody');
+  tbody.innerHTML = M.results.map((r, i) => {
+    const d = r.data || {};
+    const isErr = r.status === 'error';
+    const needReview = r.status === 'review';
+    const statusIcon = isErr ? '❌' : needReview ? '⚠️' : '✅';
+    const statusColor = isErr ? 'var(--red)' : needReview ? 'var(--yellow)' : 'var(--green)';
+    const statusBg = isErr ? 'var(--red-bg)' : needReview ? 'var(--yellow-bg)' : 'var(--green-bg)';
+    const rowBg = isErr ? 'rgba(220,38,38,0.03)' : '';
+
+    const cgOptions = CG_OPTS.map(cg => `<option value="${cg}" ${cg===d.cg_sugerida?'selected':''}>${cg}</option>`).join('');
+    const catOptions = CAT_OPTS.map(cat => `<option value="${cat}" ${cat===d.categoria_sugerida?'selected':''}>${cat}</option>`).join('');
+
+    return `<tr style="border-bottom:1px solid var(--border);background:${rowBg}" id="massa-row-${i}">
+      <td style="padding:10px 16px;vertical-align:middle">
+        <input type="checkbox" ${r.selected&&!isErr?'checked':''} ${isErr?'disabled':''} 
+          onchange="massaToggle(${i},this.checked)"
+          style="width:16px;height:16px;accent-color:var(--purple);cursor:pointer">
+      </td>
+      <td style="padding:10px 16px;vertical-align:middle;max-width:180px">
+        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.file.name}</div>
+      </td>
+      <td style="padding:10px 16px;vertical-align:middle">
+        ${isErr ? `<span style="color:var(--red);font-size:12px">${r.error}</span>` : `
+        <input type="text" value="${d.fornecedor||''}" 
+          onchange="massaUpdate(${i},'fornecedor',this.value)"
+          style="width:160px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-weight:600;outline:none"
+          onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">`}
+      </td>
+      <td style="padding:10px 16px;vertical-align:middle">
+        ${isErr ? '—' : `
+        <select onchange="massaUpdate(${i},'cg_sugerida',this.value)"
+          style="padding:5px 8px;border-radius:6px;border:1.5px solid ${needReview?'var(--yellow)':'var(--border)'};background:${needReview?'var(--yellow-bg)':'var(--bg)'};color:var(--text);font-size:12px;font-weight:600;outline:none;cursor:pointer"
+          onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='${needReview?'var(--yellow)':'var(--border)'}'">
+          <option value="">Selecione...</option>
+          ${cgOptions}
+        </select>`}
+      </td>
+      <td style="padding:10px 16px;vertical-align:middle">
+        ${isErr ? '—' : `
+        <select onchange="massaUpdate(${i},'categoria_sugerida',this.value)"
+          style="width:220px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-weight:600;outline:none;cursor:pointer"
+          onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
+          <option value="">Selecione...</option>
+          ${catOptions}
+        </select>`}
+      </td>
+      <td style="padding:10px 16px;vertical-align:middle">
+        ${isErr ? '—' : `
+        <input type="number" value="${d.valor_nf||''}" step="0.01"
+          onchange="massaUpdate(${i},'valor_nf',parseFloat(this.value))"
+          style="width:100px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-weight:700;outline:none"
+          onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">`}
+      </td>
+      <td style="padding:10px 16px;vertical-align:middle">
+        ${isErr ? '—' : `
+        <input type="date" value="${d.data_vencimento||''}"
+          onchange="massaUpdate(${i},'data_vencimento',this.value)"
+          style="padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-weight:600;outline:none"
+          onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">`}
+      </td>
+      <td style="padding:10px 16px;vertical-align:middle;text-align:center">
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:${statusBg};color:${statusColor}">
+          ${statusIcon} ${isErr?'Erro':needReview?'Revisar':'Pronto'}
+        </span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function massaToggle(i, checked) {
+  M.results[i].selected = checked;
+  const sel = M.results.filter(r => r.selected && r.status !== 'error').length;
+  document.getElementById('massa-footer-info').textContent = `${sel} NFs selecionadas para lançar`;
+  document.getElementById('massa-lancar-txt').textContent = `🚀 Lançar ${sel} NFs`;
+}
+
+function massaUpdate(i, field, value) {
+  if(!M.results[i].data) M.results[i].data = {};
+  M.results[i].data[field] = value;
+  // Se CG foi selecionada, remove o estado de review
+  if(field === 'cg_sugerida' && value) {
+    M.results[i].status = 'ok';
+    const sel = M.results[i].file ? document.querySelector(`#massa-row-${i} select`) : null;
+    if(sel) sel.style.borderColor = 'var(--border)', sel.style.background = 'var(--bg)';
+  }
+}
+
+async function massaLancarTodos() {
+  const toSend = M.results.filter(r => r.selected && r.status !== 'error' && r.data);
+  if(!toSend.length) { toast('Nenhuma NF selecionada', '', 'error'); return; }
+
+  // Valida campos obrigatórios
+  const invalidas = toSend.filter(r => !r.data.cg_sugerida || !r.data.valor_nf);
+  if(invalidas.length) {
+    toast('Campos incompletos', `${invalidas.length} NF(s) precisam de CG e Valor`, 'error');
+    return;
+  }
+
+  const btn = document.getElementById('massa-lancar-btn');
+  btn.disabled = true;
+  document.getElementById('massa-lancar-txt').textContent = '⏳ Lançando...';
+
+  let sucesso = 0, falha = 0;
+
+  for(const r of toSend) {
+    try {
+      const b64 = await f2b(r.file);
+      const payload = {
+        action: 'lancarNF',
+        mes: r.data.mes_referencia || S.mes,
+        fornecedor: r.data.fornecedor || 'Não identificado',
+        nf: r.data.nf_numero || '',
+        valor: r.data.valor_nf,
+        cg: r.data.cg_sugerida,
+        categoria: r.data.categoria_sugerida || '',
+        pagamento: '',
+        vencimento: r.data.data_vencimento || '',
+        tipo: 'recorrente',
+        comentario: r.data.descricao_servico || '',
+        status: 'Pendente',
+        files: [b64],
+      };
+      const res = await fetch(S.gasUrl, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
+      const json = await res.json();
+      if(json.ok) sucesso++;
+      else { falha++; r.status = 'error'; r.error = json.error; }
+    } catch(e) {
+      falha++;
+      r.status = 'error';
+      r.error = e.message;
+    }
+  }
+
+  btn.disabled = false;
+  renderMassaTabela();
+
+  if(sucesso > 0) {
+    showSuccessModal(
+      `${sucesso} NF${sucesso!==1?'s':''} lançada${sucesso!==1?'s':''}`,
+      sucesso,
+      falha > 0 ? `⚠️ ${falha} NF(s) falharam` : `Tudo lançado com sucesso`,
+      ''
+    );
+    refreshDash();
+  } else {
+    toast('Erro ao lançar', `${falha} NFs falharam`, 'error');
+  }
+}
+
+function massaReset() {
+  M.files = [];
+  M.results = [];
+  document.getElementById('massa-file-list').innerHTML = '';
+  document.getElementById('massa-ai-bar').style.display = 'none';
+  document.getElementById('massa-step2').style.display = 'none';
+  document.getElementById('massa-btn-txt').textContent = 'Processar com IA';
+  document.getElementById('massa-btn').disabled = false;
+}
 
 // ─── AI EXTRACTION ─────────────────────────────────────────────────────────
 const CG_ADDRESSES = {
