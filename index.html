@@ -954,6 +954,8 @@ Categorias: ${CAT_OPTS.join(', ')}.`
         if(!json.ok) throw new Error(json.error);
         const raw = json.text.replace(/\`\`\`json|\`\`\`/g,'').trim();
         const result = JSON.parse(raw);
+        // Normaliza valor para número puro
+        if (result.valor_nf !== undefined) result.valor_nf = parseSafeFloat(result.valor_nf);
         M.results[idx] = { ...M.results[idx], data: result, status: result.confianca_cg === 'alta' ? 'ok' : 'review' };
       } catch(e) {
         M.results[idx] = { ...M.results[idx], status: 'error', error: e.message };
@@ -1160,9 +1162,15 @@ async function extractWithAI() {
     // Converte arquivos para base64
     const docs = await Promise.all(S.files.map(f2b));
 
-    const prompt = `Analise este(s) documento(s) que podem ser nota fiscal (NF) e/ou boleto bancário de uma clínica de saúde em São Paulo.
+    const prompt = `Analise este(s) documento(s). Pode haver uma Nota Fiscal (NF) e/ou um Boleto Bancário de uma clínica de saúde em São Paulo.
 
-Extraia as seguintes informações e responda SOMENTE em JSON válido, sem texto adicional, sem markdown:
+REGRAS IMPORTANTES:
+- valor_nf: pegue SEMPRE da NOTA FISCAL (documento com CNPJ emitente, discriminação de serviços, impostos). NUNCA use o valor do boleto.
+- data_vencimento: pegue SEMPRE do BOLETO BANCÁRIO (linha digitável, data de vencimento do boleto). Se não houver boleto, use a data de vencimento da NF.
+- Se houver apenas um documento, trate-o como NF e extraia valor e vencimento dele.
+- valor_nf deve ser um número puro sem formatação, exemplo: 2360.55 (use ponto como separador decimal, sem pontos de milhar, sem R$)
+
+Responda SOMENTE em JSON válido, sem markdown:
 
 {
   "fornecedor": "nome completo do fornecedor/emitente da NF",
@@ -1170,24 +1178,21 @@ Extraia as seguintes informações e responda SOMENTE em JSON válido, sem texto
   "valor_nf": 0.00,
   "data_vencimento": "YYYY-MM-DD",
   "mes_referencia": "YYYY-MM",
-  "endereco_destino": "endereço completo do destinatário/tomador do serviço",
-  "descricao_servico": "descrição resumida do serviço prestado",
+  "endereco_destino": "endereço do destinatário na NF",
+  "descricao_servico": "descrição resumida do serviço",
   "categoria_sugerida": "categoria mais provável",
   "categoria_opcoes": ["opção 1", "opção 2"],
   "cg_opcoes": ["opção CG 1", "opção CG 2"],
   "confianca_categoria": "alta|media|baixa",
-  "cg_sugerida": "nome da unidade identificada ou vazio se não souber",
+  "cg_sugerida": "nome da unidade identificada ou vazio",
   "confianca_cg": "alta|media|baixa",
-  "observacoes": "qualquer informação relevante adicional"
+  "observacoes": "informações adicionais"
 }
 
 Categorias possíveis: Limpeza | Serviços de Terceiros, Segurança | Serviços de Terceiros, Ar-condicionado | Manutenção Preventiva, Serviços Gerais | Manutenção Corretiva, Materiais/Equipamentos | Manutenção Corretiva, Melhorias | Obras e Benfeitorias, Enxoval da Casa Genial - Mobiliário, Enxoval da Casa Genial - Clínico, Obras e Benfeitorias - Expansão, Licenças e Regularizações - Facilities, Garantias Locatícias - Facilities, Frete de envio de equipamentos.
 
-Unidades possíveis: Morumbi (12º), Morumbi (14º), Morumbi (16º), Tatuapé, Pinheiros, Paraíso, Alphaville (3º), Alphaville (9º), Anália Franco, Santana.
-
-Para identificar a unidade, use o endereço do destinatário/tomador do serviço na nota. Se houver múltiplos andares do mesmo prédio, indique confianca_cg como "media".
-
-O valor_nf deve ser o valor TOTAL da nota fiscal.`;
+Unidades: CG Morumbi, CG Pinheiros, CG Tatuapé, CG Paraíso, CG Alphaville, CG Anália Franco, CG Santana, Escritório.
+Para identificar a unidade, use o endereço do destinatário na NF.`;
 
     const resp = await fetch('/api/claude', {
       method: 'POST',
@@ -1211,6 +1216,43 @@ O valor_nf deve ser o valor TOTAL da nota fiscal.`;
     btnTxt.textContent = 'Tentar novamente';
     btnIcon.textContent = '✨';
   }
+}
+
+// Parse seguro de valor monetário — aceita 2360.55, 2.360,55, R$ 2.360,55, 2,360.55
+function parseSafeFloat(raw) {
+  if (typeof raw === 'number') {
+    // Se o número já veio como float mas pode estar errado (ex: 2000000 ao invés de 2000)
+    return raw;
+  }
+  let s = String(raw).replace(/R\$|\s/g, '').trim();
+  if (!s) return '';
+  // Detecta formato BR: tem vírgula como decimal (ex: 2.360,55)
+  if (s.includes(',') && s.includes('.')) {
+    // Verifica qual é o separador decimal pelo último caractere separador
+    const lastComma = s.lastIndexOf(',');
+    const lastDot   = s.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // BR format: 2.360,55 → remove pontos de milhar, troca vírgula por ponto
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      // EN format: 2,360.55 → remove vírgulas de milhar
+      s = s.replace(/,/g, '');
+    }
+  } else if (s.includes(',')) {
+    // Só vírgula: pode ser decimal BR (2360,55) ou milhar (2,360)
+    const parts = s.split(',');
+    if (parts[parts.length-1].length <= 2) {
+      // Decimal BR: 2360,55
+      s = s.replace(',', '.');
+    } else {
+      // Milhar: 2,360 → remove vírgula
+      s = s.replace(/,/g, '');
+    }
+  }
+  // Remove pontos restantes que sejam separadores de milhar (ex: 2.360)
+  // Só remove se não houver mais nada depois (já tratado acima)
+  const val = parseFloat(s);
+  return isNaN(val) ? '' : val;
 }
 
 function applyAIResult(r) {
@@ -1238,7 +1280,7 @@ function applyAIResult(r) {
   }
 
   if (r.nf_numero)       setField('f-nf', r.nf_numero);
-  if (r.valor_nf)        setField('f-val', r.valor_nf);
+  if (r.valor_nf)        setField('f-val', parseSafeFloat(r.valor_nf));
   if (r.data_vencimento) setField('f-venc', r.data_vencimento);
   if (r.descricao_servico) setField('f-com', r.descricao_servico);
 
