@@ -468,6 +468,37 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
               <button class="btn btn-ghost btn-sm" onclick="massaReset()">← Nova seleção</button>
             </div>
           </div>
+          <!-- Barra de aplicação em massa -->
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--purple-muted);border-bottom:1px solid var(--purple-border)">
+            <span style="font-size:12px;font-weight:700;color:var(--purple)">✏️ Aplicar a todas:</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Vencimento</label>
+              <input type="date" id="massa-venc-global"
+                style="padding:5px 8px;border-radius:6px;border:1.5px solid var(--purple-border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;outline:none"
+                onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--purple-border)'">
+              <button onclick="massaAplicarVencimento()" class="btn btn-p btn-sm" style="padding:6px 14px;font-size:12px">Aplicar a todas</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-left:16px">
+              <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase">Categoria</label>
+              <select id="massa-cat-global"
+                style="padding:5px 8px;border-radius:6px;border:1.5px solid var(--purple-border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;outline:none;cursor:pointer">
+                <option value="">Selecione…</option>
+                <option>Limpeza | Serviços de Terceiros</option>
+                <option>Segurança | Serviços de Terceiros</option>
+                <option>Ar-condicionado | Manutenção Preventiva</option>
+                <option>Serviços Gerais | Manutenção Corretiva</option>
+                <option>Materiais/Equipamentos | Manutenção Corretiva</option>
+                <option>Melhorias | Obras e Benfeitorias</option>
+                <option>Enxoval da Casa Genial - Mobiliário</option>
+                <option>Enxoval da Casa Genial - Clínico</option>
+                <option>Obras e Benfeitorias - Expansão</option>
+                <option>Licenças e Regularizações - Facilities</option>
+                <option>Garantias Locatícias - Facilities</option>
+                <option>Frete de envio de equipamentos</option>
+              </select>
+              <button onclick="massaAplicarCategoria()" class="btn btn-p btn-sm" style="padding:6px 14px;font-size:12px">Aplicar a todas</button>
+            </div>
+          </div>
           <div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;min-width:900px">
               <thead>
@@ -544,6 +575,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="btn btn-g" onclick="closeOkModal();goTo('lista')" style="flex:1;justify-content:center">📋 Ver notas</button>
       <button class="btn btn-p" onclick="closeOkModal()" style="flex:1;justify-content:center">➕ Nova NF</button>
     </div>
+  </div>
+</div>
+
+<!-- MASSA PROGRESS OVERLAY -->
+<div id="massa-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,21,53,0.75);backdrop-filter:blur(6px);z-index:400;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:36px 40px;max-width:420px;width:90%;box-shadow:var(--shadow-lg);text-align:center">
+    <div style="font-size:36px;margin-bottom:16px">🚀</div>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:var(--text);margin-bottom:6px">Lançando notas fiscais</div>
+    <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:24px" id="massa-overlay-sub">Aguarde enquanto processamos…</div>
+    <!-- Barra de progresso -->
+    <div style="height:10px;background:var(--surface2);border-radius:999px;overflow:hidden;margin-bottom:12px">
+      <div id="massa-overlay-fill" style="height:100%;background:linear-gradient(90deg,var(--purple),var(--purple-mid));border-radius:999px;width:0%;transition:width .4s ease"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700">
+      <span id="massa-overlay-label" style="color:var(--text-muted)">Preparando…</span>
+      <span id="massa-overlay-count" style="color:var(--purple)">0/0</span>
+    </div>
+    <!-- Lista de status por NF -->
+    <div id="massa-overlay-list" style="margin-top:20px;text-align:left;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
   </div>
 </div>
 
@@ -1070,20 +1120,43 @@ async function massaLancarTodos() {
   const toSend = M.results.filter(r => r.selected && r.status !== 'error' && r.data);
   if(!toSend.length) { toast('Nenhuma NF selecionada', '', 'error'); return; }
 
-  // Valida campos obrigatórios
   const invalidas = toSend.filter(r => !r.data.cg_sugerida || !r.data.valor_nf);
   if(invalidas.length) {
     toast('Campos incompletos', `${invalidas.length} NF(s) precisam de CG e Valor`, 'error');
     return;
   }
 
+  // Mostra overlay de progresso
+  const overlay   = document.getElementById('massa-overlay');
+  const fillEl    = document.getElementById('massa-overlay-fill');
+  const labelEl   = document.getElementById('massa-overlay-label');
+  const countEl   = document.getElementById('massa-overlay-count');
+  const subEl     = document.getElementById('massa-overlay-sub');
+  const listEl    = document.getElementById('massa-overlay-list');
+  overlay.style.display = 'flex';
+  listEl.innerHTML = '';
+  const total = toSend.length;
+  let done = 0, sucesso = 0, falha = 0;
+
+  function updateOverlay(nfName, ok, err) {
+    done++;
+    const pct = Math.round((done/total)*100);
+    fillEl.style.width = pct + '%';
+    countEl.textContent = `${done}/${total}`;
+    labelEl.textContent = done < total ? `Lançando ${done+1}ª NF…` : 'Finalizando…';
+    subEl.textContent = `${sucesso} lançada${sucesso!==1?'s':''} com sucesso${falha>0?' · '+falha+' erro(s)':''}`;
+    const item = document.createElement('div');
+    item.style.cssText = `display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:600;background:${ok?'var(--green-bg)':'var(--red-bg)'};color:${ok?'var(--green)':'var(--red)'}`;
+    item.innerHTML = `<span>${ok?'✅':'❌'}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nfName}</span><span>${ok?'Lançada':'Erro: '+err}</span>`;
+    listEl.appendChild(item);
+    listEl.scrollTop = listEl.scrollHeight;
+  }
+
   const btn = document.getElementById('massa-lancar-btn');
   btn.disabled = true;
-  document.getElementById('massa-lancar-txt').textContent = '⏳ Lançando...';
-
-  let sucesso = 0, falha = 0;
 
   for(const r of toSend) {
+    const nfName = r.file.name.replace('.pdf','').replace('.PDF','');
     try {
       const b64 = await f2b(r.file);
       const payload = {
@@ -1101,31 +1174,62 @@ async function massaLancarTodos() {
         status: 'Pendente',
         files: [b64],
       };
-      const res = await fetch(S.gasUrl, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
+      const res  = await fetch(S.gasUrl, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
       const json = await res.json();
-      if(json.ok) sucesso++;
-      else { falha++; r.status = 'error'; r.error = json.error; }
+      if(json.ok) { sucesso++; r.lancado = true; updateOverlay(nfName, true, ''); }
+      else { falha++; r.status = 'error'; r.error = json.error; updateOverlay(nfName, false, json.error||'erro'); }
     } catch(e) {
-      falha++;
-      r.status = 'error';
-      r.error = e.message;
+      falha++; r.status = 'error'; r.error = e.message;
+      updateOverlay(nfName, false, e.message);
     }
   }
 
-  btn.disabled = false;
-  renderMassaTabela();
+  // Finaliza overlay
+  labelEl.textContent = sucesso === total ? '🎉 Tudo lançado!' : `${sucesso} lançadas, ${falha} com erro`;
+  fillEl.style.background = falha > 0 ? 'linear-gradient(90deg,var(--green),var(--yellow))' : 'linear-gradient(90deg,var(--green),#34D399)';
 
-  if(sucesso > 0) {
-    showSuccessModal(
-      `${sucesso} NF${sucesso!==1?'s':''} lançada${sucesso!==1?'s':''}`,
-      sucesso,
-      falha > 0 ? `⚠️ ${falha} NF(s) falharam` : `Tudo lançado com sucesso`,
-      ''
-    );
-    refreshDash();
-  } else {
-    toast('Erro ao lançar', `${falha} NFs falharam`, 'error');
-  }
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    btn.disabled = false;
+    renderMassaTabela();
+    if(sucesso > 0) {
+      showSuccessModal(
+        `${sucesso} NF${sucesso!==1?'s':''} lançada${sucesso!==1?'s':''}`,
+        sucesso,
+        falha > 0 ? `⚠️ ${falha} NF(s) falharam` : 'Tudo lançado com sucesso',
+        ''
+      );
+      refreshDash();
+    } else {
+      toast('Erro ao lançar', `${falha} NFs falharam`, 'error');
+    }
+  }, 1500);
+}
+
+function massaAplicarVencimento() {
+  const v = document.getElementById('massa-venc-global').value;
+  if (!v) { toast('Selecione uma data primeiro', '', 'error'); return; }
+  M.results.forEach((r, i) => {
+    if (r.data && r.status !== 'error') {
+      r.data.data_vencimento = v;
+      const inp = document.querySelector(`#massa-row-${i} input[type="date"]`);
+      if (inp) { inp.value = v; inp.style.borderColor = 'var(--purple)'; setTimeout(()=>inp.style.borderColor='var(--border)', 1500); }
+    }
+  });
+  toast(`Vencimento aplicado a todas ✓`, new Date(v+'T00:00:00').toLocaleDateString('pt-BR'), 'success');
+}
+
+function massaAplicarCategoria() {
+  const v = document.getElementById('massa-cat-global').value;
+  if (!v) { toast('Selecione uma categoria primeiro', '', 'error'); return; }
+  M.results.forEach((r, i) => {
+    if (r.data && r.status !== 'error') {
+      r.data.categoria_sugerida = v;
+      const sel = document.querySelectorAll(`#massa-row-${i} select`)[1];
+      if (sel) { sel.value = v; sel.style.borderColor = 'var(--purple)'; setTimeout(()=>sel.style.borderColor='var(--border)', 1500); }
+    }
+  });
+  toast(`Categoria aplicada a todas ✓`, v, 'success');
 }
 
 function massaReset() {
