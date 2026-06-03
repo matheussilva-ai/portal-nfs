@@ -378,7 +378,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
               <select id="f-cg"><option value="">Selecione…</option><option>CG Morumbi</option><option>CG Pinheiros</option><option>CG Tatuapé</option><option>CG Paraíso</option><option>CG Alphaville</option><option>CG Anália Franco</option><option>CG Santana</option><option>Escritório</option><option>MindPlace</option></select>
             </div>
             <div class="ff"><label>Categoria *</label>
-              <select id="f-cat"><option value="">Selecione…</option><option>Limpeza | Serviços de Terceiros</option><option>Segurança | Serviços de Terceiros</option><option>Ar-condicionado | Manutenção Preventiva</option><option>Serviços Gerais | Manutenção Corretiva</option><option>Materiais/Equipamentos | Manutenção Corretiva</option><option>Melhorias | Obras e Benfeitorias</option><option>Enxoval da Casa Genial - Mobiliário</option><option>Enxoval da Casa Genial - Clínico</option><option>Obras e Benfeitorias - Expansão</option><option>Licenças e Regularizações - Facilities</option><option>Garantias Locatícias - Facilities</option><option>Frete de envio de equipamentos</option></select>
+              <select id="f-cat"><option value="">Selecione…</option><option>Limpeza | Serviços de Terceiros</option><option>Segurança | Serviços de Terceiros</option><option>Ar-condicionado | Manutenção Preventiva</option><option>Serviços Gerais | Manutenção Corretiva</option><option>Materiais/Equipamentos | Manutenção Corretiva</option><option>Melhorias | Obras e Benfeitorias</option><option>Enxoval da Casa Genial - Mobiliário</option><option>Enxoval da Casa Genial - Clínico</option><option>Obras e Benfeitorias - Expansão</option><option>Licenças e Regularizações - Facilities</option><option>Garantias Locatícias - Facilities</option><option>Frete de envio de equipamentos</option><option>Manutenção predial | Preventiva</option></select>
             </div>
             <div class="ff"><label>Forma de pagamento</label>
               <select id="f-pgt"><option value="">Selecione…</option><option>Boleto</option><option>PIX</option><option>Cartão</option><option>Transferência</option></select>
@@ -495,6 +495,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
                 <option>Licenças e Regularizações - Facilities</option>
                 <option>Garantias Locatícias - Facilities</option>
                 <option>Frete de envio de equipamentos</option>
+                <option>Manutenção predial | Preventiva</option>
               </select>
               <button onclick="massaAplicarCategoria()" class="btn btn-p btn-sm" style="padding:6px 14px;font-size:12px">Aplicar a todas</button>
             </div>
@@ -702,7 +703,8 @@ async function submitNF(){
   hint.textContent='* Campos obrigatórios';hint.className='form-hint';
   showLoad(true);
   const fb64=await Promise.all(S.files.map(f2b));
-  const payload={action:'lancarNF',mes:S.mes,fornecedor:forn,nf,valor:val,cg,categoria:cat,pagamento:pgt,vencimento:venc,tipo:S.tipo,comentario:com,status:'Pendente',files:fb64};
+  const dataEmissao=S.mes?S.mes+'-01':'';
+  const payload={action:'lancarNF',mes:S.mes,fornecedor:forn,nf,valor:val,cg,categoria:cat,pagamento:pgt,vencimento:venc,tipo:S.tipo,comentario:com,status:'Pendente',dataEmissao,files:fb64};
   try{
     const res=await fetch(S.gasUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
     const json=await res.json();showLoad(false);
@@ -925,7 +927,7 @@ const M = {
 };
 
 const CG_OPTS = ['CG Morumbi','CG Pinheiros','CG Tatuapé','CG Paraíso','CG Alphaville','CG Anália Franco','CG Santana','Escritório','MindPlace'];
-const CAT_OPTS = ['Limpeza | Serviços de Terceiros','Segurança | Serviços de Terceiros','Ar-condicionado | Manutenção Preventiva','Serviços Gerais | Manutenção Corretiva','Materiais/Equipamentos | Manutenção Corretiva','Melhorias | Obras e Benfeitorias','Enxoval da Casa Genial - Mobiliário','Enxoval da Casa Genial - Clínico','Obras e Benfeitorias - Expansão','Licenças e Regularizações - Facilities','Garantias Locatícias - Facilities','Frete de envio de equipamentos'];
+const CAT_OPTS = ['Limpeza | Serviços de Terceiros','Segurança | Serviços de Terceiros','Ar-condicionado | Manutenção Preventiva','Serviços Gerais | Manutenção Corretiva','Materiais/Equipamentos | Manutenção Corretiva','Melhorias | Obras e Benfeitorias','Enxoval da Casa Genial - Mobiliário','Enxoval da Casa Genial - Clínico','Obras e Benfeitorias - Expansão','Licenças e Regularizações - Facilities','Garantias Locatícias - Facilities','Frete de envio de equipamentos','Manutenção predial | Preventiva'];
 
 // Drag & drop
 const mUpz = document.getElementById('massa-upz');
@@ -1159,9 +1161,10 @@ async function massaLancarTodos() {
     const nfName = r.file.name.replace('.pdf','').replace('.PDF','');
     try {
       const b64 = await f2b(r.file);
+      const mesEmissao = r.data.mes_referencia || S.mes;
       const payload = {
         action: 'lancarNF',
-        mes: r.data.mes_referencia || S.mes,
+        mes: mesEmissao,
         fornecedor: r.data.fornecedor || 'Não identificado',
         nf: r.data.nf_numero || '',
         valor: r.data.valor_nf,
@@ -1172,6 +1175,7 @@ async function massaLancarTodos() {
         tipo: 'recorrente',
         comentario: r.data.descricao_servico || '',
         status: 'Pendente',
+        dataEmissao: mesEmissao ? mesEmissao + '-01' : '',
         files: [b64],
       };
       const res  = await fetch(S.gasUrl, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
@@ -1293,7 +1297,7 @@ Responda SOMENTE em JSON válido, sem markdown:
   "observacoes": "informações adicionais"
 }
 
-Categorias possíveis: Limpeza | Serviços de Terceiros, Segurança | Serviços de Terceiros, Ar-condicionado | Manutenção Preventiva, Serviços Gerais | Manutenção Corretiva, Materiais/Equipamentos | Manutenção Corretiva, Melhorias | Obras e Benfeitorias, Enxoval da Casa Genial - Mobiliário, Enxoval da Casa Genial - Clínico, Obras e Benfeitorias - Expansão, Licenças e Regularizações - Facilities, Garantias Locatícias - Facilities, Frete de envio de equipamentos.
+Categorias possíveis: Limpeza | Serviços de Terceiros, Segurança | Serviços de Terceiros, Ar-condicionado | Manutenção Preventiva, Serviços Gerais | Manutenção Corretiva, Materiais/Equipamentos | Manutenção Corretiva, Melhorias | Obras e Benfeitorias, Enxoval da Casa Genial - Mobiliário, Enxoval da Casa Genial - Clínico, Obras e Benfeitorias - Expansão, Licenças e Regularizações - Facilities, Garantias Locatícias - Facilities, Frete de envio de equipamentos, Manutenção predial | Preventiva.
 
 Unidades: CG Morumbi, CG Pinheiros, CG Tatuapé, CG Paraíso, CG Alphaville, CG Anália Franco, CG Santana, Escritório.
 Para identificar a unidade, use o endereço do destinatário na NF.`;
