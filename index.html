@@ -294,11 +294,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <main class="main">
   <div class="topbar">
     <div><div class="tb-title" id="pg-title">Dashboard</div><div class="tb-sub" id="pg-sub">Visão geral do mês</div></div>
-    <label class="month-btn" style="cursor:pointer;position:relative">
-  <span class="mdot"></span>
-  <span id="mlbl">Maio 2026</span>
-  <input type="month" id="month-input" value="" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" onchange="onMonthChange(this.value)">
-</label>
+        <div style="position:relative" id="month-dropdown-wrap">
+      <button class="month-btn" onclick="toggleMonthDropdown()" id="month-dd-btn">
+        <span class="mdot"></span>
+        <span id="mlbl">Maio 2026</span>
+        <span style="font-size:10px;opacity:.6">▾</span>
+      </button>
+      <div id="month-dd" style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:200;min-width:180px;overflow:hidden">
+        <div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)" id="month-dd-year-label">2026</div>
+        <div id="month-dd-list" style="padding:6px"></div>
+        <div style="border-top:1px solid var(--border);padding:8px 12px;display:flex;gap:6px">
+          <button onclick="monthDDPrevYear()" style="flex:1;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:700;cursor:pointer">◀ Ano ant.</button>
+          <button onclick="monthDDNextYear()" style="flex:1;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:700;cursor:pointer">Próx. ano ▶</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="content">
@@ -916,7 +926,65 @@ function closeOkModal() {
   document.getElementById('ok-modal').style.display = 'none';
 }
 
-document.getElementById('month-input').value = S.mes;
+// ─── MONTH DROPDOWN ─────────────────────────────────────────────────────────
+let _ddYear = new Date().getFullYear();
+const MESES_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function toggleMonthDropdown() {
+  const dd = document.getElementById('month-dd');
+  if (dd.style.display === 'none') {
+    _ddYear = parseInt(S.mes.split('-')[0]) || new Date().getFullYear();
+    renderMonthDD();
+    dd.style.display = 'block';
+    // Close on outside click
+    setTimeout(() => document.addEventListener('click', closeDDOutside), 0);
+  } else {
+    dd.style.display = 'none';
+  }
+}
+
+function closeDDOutside(e) {
+  const wrap = document.getElementById('month-dropdown-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('month-dd').style.display = 'none';
+    document.removeEventListener('click', closeDDOutside);
+  }
+}
+
+function renderMonthDD() {
+  document.getElementById('month-dd-year-label').textContent = _ddYear;
+  const list = document.getElementById('month-dd-list');
+  list.innerHTML = '';
+  const currentMes = S.mes;
+  MESES_SHORT.forEach((m, i) => {
+    const ym = `${_ddYear}-${String(i+1).padStart(2,'0')}`;
+    const isActive = ym === currentMes;
+    const btn = document.createElement('button');
+    btn.textContent = m;
+    btn.style.cssText = `width:calc(100%/4 - 4px);margin:2px;padding:7px 4px;border-radius:6px;border:1.5px solid ${isActive?'var(--purple)':'transparent'};background:${isActive?'var(--purple-light)':'transparent'};color:${isActive?'var(--purple)':'var(--text-muted)'};font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--font-display)`;
+    btn.onmouseenter = () => { if(!isActive) { btn.style.background='var(--surface2)'; btn.style.borderColor='var(--border)'; }};
+    btn.onmouseleave = () => { if(!isActive) { btn.style.background='transparent'; btn.style.borderColor='transparent'; }};
+    btn.onclick = () => {
+      S.mes = ym;
+      setMlabel(ym);
+      S.nfs = []; S.budget = [];
+      refreshDash();
+      document.getElementById('month-dd').style.display = 'none';
+      document.removeEventListener('click', closeDDOutside);
+    };
+    list.appendChild(btn);
+  });
+}
+
+function monthDDPrevYear() { _ddYear--; renderMonthDD(); }
+function monthDDNextYear() { _ddYear++; renderMonthDD(); }
+
+// Keep old functions as no-ops for compatibility
+function toggleMonth() {}
+function onMonthChange(v) { if(v){ S.mes=v; setMlabel(v); S.nfs=[];S.budget=[];refreshDash(); } }
+
+// Init
+setMlabel(S.mes);
 if(S.gasUrl)setGas(true);
 refreshDash();
 
