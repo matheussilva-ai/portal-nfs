@@ -257,6 +257,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--purple-border);}
+/* KAMINO MODAL */
+.km-modal{display:none;position:fixed;inset:0;background:rgba(26,21,53,0.65);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;}
+.km-box{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:0;max-width:520px;width:94%;box-shadow:var(--shadow-lg);overflow:hidden;max-height:92vh;overflow-y:auto;}
+.km-head{background:linear-gradient(135deg,#5B3FA6,#7B5CC4);padding:22px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:1;}
+.km-head-icon{font-size:24px;flex-shrink:0;}
+.km-head-title{font-family:var(--font-display);font-size:17px;font-weight:900;color:#fff;}
+.km-head-sub{font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;font-weight:600;}
+.km-body{padding:24px 28px;display:flex;flex-direction:column;gap:16px;}
+.km-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.km-field{display:flex;flex-direction:column;gap:5px;}
+.km-field label{font-size:11.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;}
+.km-field input,.km-field select,.km-field textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:13.5px;font-weight:600;padding:9px 12px;outline:none;transition:all .15s;}
+.km-field input:focus,.km-field select:focus,.km-field textarea:focus{border-color:var(--purple);background:var(--surface);box-shadow:0 0 0 3px var(--purple-muted);}
+.km-field textarea{resize:vertical;min-height:72px;}
+.km-info{background:var(--purple-muted);border:1px solid var(--purple-border);border-radius:var(--radius-sm);padding:12px 14px;font-size:12.5px;font-weight:600;color:var(--purple);line-height:1.6;}
+.km-footer{display:flex;gap:10px;padding:16px 28px;border-top:1px solid var(--border);background:var(--surface2);position:sticky;bottom:0;}
+.km-footer .btn{flex:1;justify-content:center;}
+.km-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;border:none;background:linear-gradient(135deg,#5B3FA6,#7B5CC4);color:#fff;font-family:var(--font-display);transition:all .15s;}
+.km-btn:hover{opacity:.85;}
+
 </style>
 </head>
 <body>
@@ -425,7 +445,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div class="sec-card">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon">📋</div>Notas do mês</div><span class="sec-badge" id="lista-cnt">— registros</span></div>
-        <table class="nt"><thead><tr><th>Nº NF</th><th>Fornecedor</th><th>CG</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Tipo</th><th>Status</th><th>Anexo</th></tr></thead>
+        <table class="nt"><thead><tr><th>Nº NF</th><th>Fornecedor</th><th>CG</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Tipo</th><th>Status</th><th>Anexo</th><th>Kamino</th></tr></thead>
         <tbody id="lista-body"><tr><td colspan="9"><div class="emp"><div class="emp-ico">⏳</div><div class="emp-ttl">Carregando…</div></div></td></tr></tbody></table>
       </div>
     </section>
@@ -560,10 +580,117 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           </div>
         </div>
       </div>
+
+      <div class="fb" style="margin-top:20px">
+        <div class="fb-head"><div class="fb-step" style="background:linear-gradient(135deg,#5B3FA6,#7B5CC4)">🚀</div><div class="fb-title">Integração Kamino</div></div>
+        <div class="fb-body">
+          <p style="font-size:13.5px;color:var(--text-muted);font-weight:600;margin-bottom:18px;line-height:1.6">URL do script de gravação na aba <b>05. Integração Kamino</b>. Após gravar, use o menu <b>Kamino Pagamentos</b> na planilha para enviar.</p>
+          <div class="cfg-row">
+            <div class="ff"><label>URL do Script Kamino</label><input type="url" id="cfg-kamino-url" placeholder="https://script.google.com/macros/s/…/exec"></div>
+            <button class="btn btn-p" onclick="saveKaminoConfig()" style="flex-shrink:0;background:linear-gradient(135deg,#5B3FA6,#7B5CC4)">Salvar</button>
+          </div>
+          <div class="info-box" style="background:#F3F0FF;border-color:rgba(91,63,166,.15);color:var(--purple)">🚀 Após lançar uma NF, clique em <b>"Enviar Kamino"</b> na tela de sucesso ou no botão 🚀 na lista de notas.</div>
+        </div>
+      </div>
+
     </section>
 
   </div>
 </main>
+
+
+<!-- KAMINO MODAL -->
+<div class="km-modal" id="km-modal">
+  <div class="km-box">
+    <div class="km-head">
+      <span class="km-head-icon">🚀</span>
+      <div>
+        <div class="km-head-title">Enviar para Kamino</div>
+        <div class="km-head-sub">Preencha os dados de pagamento para lançar na fila</div>
+      </div>
+    </div>
+    <div class="km-body">
+      <div class="km-info" id="km-nf-info">—</div>
+      <div class="km-row">
+        <div class="km-field">
+          <label>Data de Pagamento *</label>
+          <input type="date" id="km-data-pgt">
+        </div>
+        <div class="km-field">
+          <label>Data de Competência *</label>
+          <input type="date" id="km-data-comp">
+        </div>
+      </div>
+      <div class="km-field">
+        <label>Despesa *</label>
+        <input type="text" id="km-despesa" placeholder="Ex: Manutenção ar-condicionado preventiva…">
+      </div>
+      <div class="km-row">
+        <div class="km-field">
+          <label>Unidade (CG) *</label>
+          <select id="km-cg">
+            <option value="">Selecione…</option>
+            <option value="CG Morumbi">CG Morumbi</option>
+<option value="CG Pinheiros">CG Pinheiros</option>
+<option value="CG Tatuapé">CG Tatuapé</option>
+<option value="CG Paraíso">CG Paraíso</option>
+<option value="CG Alphaville">CG Alphaville</option>
+<option value="CG Anália Franco">CG Anália Franco</option>
+<option value="CG Santana">CG Santana</option>
+<option value="Escritório">Escritório</option>
+          </select>
+        </div>
+        <div class="km-field">
+          <label>Categoria *</label>
+          <select id="km-cat">
+            <option value="">Selecione…</option>
+            <option value="Limpeza | Serviços de Terceiros">Limpeza | Serviços de Terceiros</option>
+<option value="Segurança | Serviços de Terceiros">Segurança | Serviços de Terceiros</option>
+<option value="Ar-condicionado | Manutenção Preventiva">Ar-condicionado | Manutenção Preventiva</option>
+<option value="Serviços Gerais | Manutenção Corretiva">Serviços Gerais | Manutenção Corretiva</option>
+<option value="Materiais/Equipamentos | Manutenção Corretiva">Materiais/Equipamentos | Manutenção Corretiva</option>
+<option value="Melhorias | Obras e Benfeitorias">Melhorias | Obras e Benfeitorias</option>
+<option value="Enxoval da Casa Genial - Mobiliário">Enxoval da Casa Genial - Mobiliário</option>
+<option value="Enxoval da Casa Genial - Clínico">Enxoval da Casa Genial - Clínico</option>
+<option value="Obras e Benfeitorias - Expansão">Obras e Benfeitorias - Expansão</option>
+<option value="Licenças e Regularizações - Facilities">Licenças e Regularizações - Facilities</option>
+<option value="Garantias Locatícias - Facilities">Garantias Locatícias - Facilities</option>
+<option value="Frete de envio de equipamentos">Frete de envio de equipamentos</option>
+<option value="Manutenção predial | Preventiva">Manutenção predial | Preventiva</option>
+<option value="Compras emergenciais">Compras emergenciais</option>
+<option value="Insumos">Insumos</option>
+<option value="IPTU">IPTU</option>
+<option value="Condomínio">Condomínio</option>
+<option value="Aluguel">Aluguel</option>
+<option value="Contas de Consumo [Água, Energia]">Contas de Consumo [Água, Energia]</option>
+          </select>
+        </div>
+      </div>
+      <div class="km-row">
+        <div class="km-field">
+          <label>Nº do Boleto</label>
+          <input type="text" id="km-boleto" placeholder="Somente números">
+        </div>
+        <div class="km-field">
+          <label>Nº Nota Fiscal</label>
+          <input type="text" id="km-nf-num" placeholder="Ex: 25239">
+        </div>
+      </div>
+      <div class="km-field">
+        <label>Link do Boleto no Drive (opcional)</label>
+        <input type="url" id="km-link-boleto" placeholder="https://drive.google.com/…">
+      </div>
+      <div class="km-field">
+        <label>Observações</label>
+        <textarea id="km-obs" placeholder="Informações adicionais…"></textarea>
+      </div>
+    </div>
+    <div class="km-footer">
+      <button class="btn btn-g" onclick="closeKaminoModal()">Cancelar</button>
+      <button class="btn btn-p" onclick="submitKamino()" style="background:linear-gradient(135deg,#5B3FA6,#7B5CC4)">🚀 Gravar na Kamino</button>
+    </div>
+  </div>
+</div>
 
 <!-- VALIDATION MODAL -->
 <div id="val-modal" style="display:none;position:fixed;inset:0;background:rgba(26,21,53,0.6);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center">
@@ -584,6 +711,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="ok-modal-details" style="font-size:13.5px;color:var(--text-muted);font-weight:600;line-height:1.8;margin-bottom:24px"></div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-g" onclick="closeOkModal();goTo('lista')" style="flex:1;justify-content:center">📋 Ver notas</button>
+      <button class="btn btn-p" onclick="closeOkModal();openKaminoFromSuccess()" style="flex:1;justify-content:center;background:linear-gradient(135deg,#5B3FA6,#7B5CC4)">🚀 Kamino</button>
       <button class="btn btn-p" onclick="closeOkModal()" style="flex:1;justify-content:center">➕ Nova NF</button>
     </div>
   </div>
@@ -720,7 +848,11 @@ async function submitNF(){
     const json=await res.json();showLoad(false);
     if(json.ok){
       showSuccessModal(forn, val, cg, cat);
-      S.nfs.unshift({...payload,dataLancamento:new Date().toISOString().slice(0,10),driveUrl:json.driveUrl||''});
+      const _ai = window._lastAIResult || {};
+      S.nfs.unshift({...payload,dataLancamento:new Date().toISOString().slice(0,10),driveUrl:json.driveUrl||'',
+        linha_digitavel: _ai.linha_digitavel || '',
+        data_pagamento_sugerida: _ai.data_pagamento_sugerida || ''
+      });
       localStorage.setItem('nfs_cache',JSON.stringify(S.nfs.slice(0,200)));
       clearForm();refreshDash();
     }else{toast('Erro ao lançar',json.error||'Tente novamente','error');}
@@ -856,6 +988,7 @@ function nfRow(n,anx){
     <td><span class="tp-badge ${tp}">${tp==='avulso'?'Avulso':'Recorrente'}</span></td>
     <td><span class="st-badge ${st}">${n.status||'Pendente'}</span></td>
     ${anx?`<td>${ax}</td>`:''}
+    ${anx?`<td><button class='km-btn' onclick='openKaminoModal(S.nfs.find(x=>x.nf==="${n.nf}"&&x.cg==="${n.cg}"))' title='Enviar para Kamino'>🚀</button></td>`:''}
   </tr>`;
 }
 function renderRecent(nfs){
@@ -1356,7 +1489,9 @@ async function extractWithAI() {
 
 REGRAS IMPORTANTES:
 - valor_nf: pegue SEMPRE da NOTA FISCAL (documento com CNPJ emitente, discriminação de serviços, impostos). NUNCA use o valor do boleto.
-- data_vencimento: pegue SEMPRE do BOLETO BANCÁRIO (linha digitável, data de vencimento do boleto). Se não houver boleto, use a data de vencimento da NF.
+- data_vencimento: pegue SEMPRE do BOLETO BANCÁRIO (campo "Vencimento" ou "Data de Vencimento" do boleto). Se não houver boleto, use a data de vencimento da NF.
+- linha_digitavel: é o código numérico longo do boleto (47 ou 48 dígitos), também chamado de "linha digitável" ou "código de barras numérico". Copie EXATAMENTE os números, sem espaços ou pontos.
+- data_pagamento_sugerida: sugira a própria data de vencimento do boleto como data de pagamento (mesmo valor de data_vencimento).
 - Se houver apenas um documento, trate-o como NF e extraia valor e vencimento dele.
 - valor_nf deve ser um número puro sem formatação, exemplo: 2360.55 (use ponto como separador decimal, sem pontos de milhar, sem R$)
 
@@ -1367,6 +1502,8 @@ Responda SOMENTE em JSON válido, sem markdown:
   "nf_numero": "número da nota fiscal",
   "valor_nf": 0.00,
   "data_vencimento": "YYYY-MM-DD",
+  "data_pagamento_sugerida": "YYYY-MM-DD",
+  "linha_digitavel": "somente os números da linha digitável do boleto, sem espaços ou pontos",
   "mes_referencia": "YYYY-MM",
   "endereco_destino": "endereço do destinatário na NF",
   "descricao_servico": "descrição resumida do serviço",
@@ -1399,6 +1536,7 @@ Para identificar a unidade, use o endereço do destinatário na NF.`;
     try { result = JSON.parse(clean); }
     catch(pe) { throw new Error('Não foi possível ler o documento. Verifique se o PDF é legível.'); }
 
+    window._lastAIResult = result;
     applyAIResult(result);
   } catch(e) {
     toast('Erro na extração IA', e.message, 'error');
@@ -1499,6 +1637,8 @@ function applyAIResult(r) {
     r.mes_referencia     && `📆 <b>Mês ref.:</b> ${mlabel(r.mes_referencia)}`,
     r.cg_sugerida        && `📍 <b>CG:</b> ${r.cg_sugerida}`,
     r.categoria_sugerida && `🏷️ <b>Categoria:</b> ${r.categoria_sugerida}`,
+    r.linha_digitavel && `🏦 <b>Linha digitável:</b> ${r.linha_digitavel.slice(0,20)}…`,
+    r.data_pagamento_sugerida && `💳 <b>Pagamento sugerido:</b> ${new Date(r.data_pagamento_sugerida+'T00:00:00').toLocaleDateString('pt-BR')}`,
   ].filter(Boolean);
   document.getElementById('ai-fields-summary').innerHTML = fields.join('<br>');
   document.getElementById('ai-conf-badge').textContent = '✓ Campos preenchidos';
@@ -1510,6 +1650,126 @@ function applyAIResult(r) {
 
   toast('Campos preenchidos pela IA ✨', 'Revise e ajuste se necessário', 'success');
 }
+
+// ─── KAMINO INTEGRATION ─────────────────────────────────────────────────────
+
+const KAMINO_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbweJtemgaK14qGYH-wmW49gMJqhtlcnkzXU5yE77sBTyh60r_-IJlVsYni50nXleQCX/exec';
+
+S.kaminoUrl = localStorage.getItem('kaminoUrl') || KAMINO_URL_DEFAULT;
+
+let _kmNF = null;
+
+function openKaminoFromSuccess() {
+  const mn = S.nfs.filter(n => (n.mes||'') === S.mes);
+  if (mn.length) openKaminoModal(mn[0]);
+  else toast('Nenhuma NF encontrada', '', 'error');
+}
+
+function openKaminoModal(nf) {
+  _kmNF = nf;
+  const val = nf.valor ? 'R$ ' + parseFloat(nf.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+  document.getElementById('km-nf-info').innerHTML =
+    '<b>' + (nf.fornecedor||'—') + '</b> &nbsp;·&nbsp; ' + (nf.cg||'—') + ' &nbsp;·&nbsp; ' + val + '<br><span style="font-size:11.5px;color:var(--text-dim)">' + (nf.categoria||'—') + '</span>';
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('km-data-pgt').value   = nf.data_pagamento_sugerida || nf.vencimento || today;
+  document.getElementById('km-data-comp').value  = nf.mes ? nf.mes + '-01' : today;
+  document.getElementById('km-nf-num').value     = nf.nf || '';
+  document.getElementById('km-despesa').value    = nf.comentario || '';
+  document.getElementById('km-obs').value        = '';
+  document.getElementById('km-boleto').value     = nf.linha_digitavel || '';
+  document.getElementById('km-link-boleto').value = '';
+  // CG e Categoria — pré-preenchidos mas editáveis
+  const cgSel = document.getElementById('km-cg');
+  const catSel = document.getElementById('km-cat');
+  if (cgSel)  cgSel.value  = nf.cg       || '';
+  if (catSel) catSel.value = nf.categoria || '';
+  // Indicador visual se boleto foi extraído automaticamente
+  const boletoField = document.getElementById('km-boleto');
+  if (nf.linha_digitavel) {
+    boletoField.style.borderColor = 'var(--green)';
+    boletoField.style.background = 'var(--green-bg)';
+    setTimeout(() => { boletoField.style.borderColor = ''; boletoField.style.background = ''; }, 3000);
+  }
+  document.getElementById('km-modal').style.display = 'flex';
+}
+
+function closeKaminoModal() {
+  document.getElementById('km-modal').style.display = 'none';
+  _kmNF = null;
+}
+
+// Fecha modal ao clicar fora
+document.getElementById('km-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeKaminoModal();
+});
+
+async function submitKamino() {
+  if (!_kmNF) return;
+  const dataPgt  = document.getElementById('km-data-pgt').value;
+  const dataComp = document.getElementById('km-data-comp').value;
+  const despesa  = document.getElementById('km-despesa').value.trim();
+  if (!dataPgt)  { toast('Data de pagamento obrigatória', '', 'error'); return; }
+  if (!dataComp) { toast('Data de competência obrigatória', '', 'error'); return; }
+  if (!despesa)  { toast('Despesa obrigatória', '', 'error'); return; }
+  const kmCg  = document.getElementById('km-cg').value;
+  const kmCat = document.getElementById('km-cat').value;
+  if (!kmCg)  { toast('Unidade (CG) obrigatória', '', 'error'); return; }
+  if (!kmCat) { toast('Categoria obrigatória', '', 'error'); return; }
+
+  const kaminoUrl = S.kaminoUrl;
+  if (!kaminoUrl) { toast('URL do script Kamino não configurada', 'Vá em Configurações', 'error'); return; }
+
+  showLoad(true);
+  const payload = {
+    action:          'gravarKamino',
+    valor:           _kmNF.valor,
+    dataPagamento:   dataPgt,
+    dataCompetencia: dataComp,
+    despesa:         despesa,
+    categoria:       document.getElementById('km-cat').value || _kmNF.categoria || '',
+    cg:              document.getElementById('km-cg').value  || _kmNF.cg       || '',
+    fornecedor:      _kmNF.fornecedor || '',
+    descricao:       despesa,
+    linkNF:          _kmNF.driveUrl || '',
+    linkBoleto:      document.getElementById('km-link-boleto').value.trim(),
+    observacoes:     document.getElementById('km-obs').value.trim(),
+    nroNotaFiscal:   document.getElementById('km-nf-num').value.trim(),
+    numeroBoleto:    document.getElementById('km-boleto').value.trim().replace(/\D/g,''),
+  };
+
+  try {
+    const res  = await fetch(kaminoUrl, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
+    const json = await res.json();
+    showLoad(false);
+    if (json.ok) {
+      closeKaminoModal();
+      toast('Gravado na Kamino! ✅', 'Linha ' + json.row + ' · ' + json.unidadeNegocio, 'success');
+    } else {
+      toast('Erro ao gravar', json.error || 'Tente novamente', 'error');
+    }
+  } catch(e) {
+    showLoad(false);
+    toast('Falha de conexão', e.message, 'error');
+  }
+}
+
+function saveKaminoConfig() {
+  const url = (document.getElementById('cfg-kamino-url')||{}).value || '';
+  if (!url.startsWith('https://script.google.com')) {
+    toast('URL inválida', 'Use uma URL do Google Apps Script', 'error');
+    return;
+  }
+  S.kaminoUrl = url;
+  localStorage.setItem('kaminoUrl', url);
+  toast('URL Kamino salva ✓', '', 'success');
+}
+
+// Init campo config
+(function(){
+  const el = document.getElementById('cfg-kamino-url');
+  if (el) el.value = S.kaminoUrl || KAMINO_URL_DEFAULT;
+})();
+
 </script>
 </body>
 </html>
