@@ -272,6 +272,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="nav-item" data-page="lancar" href="#"><span class="nav-icon">➕</span>Lançar NF</a>
     <a class="nav-item" data-page="massa" href="#"><span class="nav-icon">📦</span>Lançamento em massa</a>
     <a class="nav-item" data-page="lista" href="#"><span class="nav-icon">📋</span>Notas lançadas</a>
+    <a class="nav-item" data-page="cartao" href="#"><span class="nav-icon">💳</span>Cartão Corporativo</a>
     <div class="nav-lbl">Sistema</div>
     <a class="nav-item" data-page="config" href="#"><span class="nav-icon">⚙️</span>Configurar</a>
   </div>
@@ -287,6 +288,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="mob-item" data-page="lancar" href="#"><span class="mob-icon">➕</span>Lançar</a>
     <a class="mob-item" data-page="massa" href="#"><span class="mob-icon">📦</span>Massa</a>
     <a class="mob-item" data-page="lista" href="#"><span class="mob-icon">📋</span>Notas</a>
+    <a class="mob-item" data-page="cartao" href="#"><span class="mob-icon">💳</span>Cartão</a>
     <a class="mob-item" data-page="config" href="#"><span class="mob-icon">⚙️</span>Config</a>
   </div>
 </nav>
@@ -537,6 +539,67 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </section>
 
+    <!-- CARTÃO CORPORATIVO -->
+    <section class="page" id="page-cartao">
+      <!-- Stats top -->
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
+        <div class="stat-card sc-purple"><div class="sc-bar"></div><div class="sc-icon">💳</div>
+          <div class="sc-label">Total gasto (Compras emerg.)</div>
+          <div class="sc-value" id="cartao-total">R$ —</div>
+          <div class="sc-meta" id="cartao-pct-total">—</div>
+        </div>
+        <div class="stat-card sc-yellow"><div class="sc-bar"></div><div class="sc-icon">📋</div>
+          <div class="sc-label">Orçado total</div>
+          <div class="sc-value" id="cartao-orcado">R$ —</div>
+          <div class="sc-meta">orçamento disponível</div>
+        </div>
+        <div class="stat-card sc-blue"><div class="sc-bar"></div><div class="sc-icon">📊</div>
+          <div class="sc-label">Δ Saldo disponível</div>
+          <div class="sc-value" id="cartao-delta">—</div>
+          <div class="sc-meta" id="cartao-delta-sub">—</div>
+        </div>
+      </div>
+
+      <!-- Budget por CG -->
+      <div class="sec-card">
+        <div class="sec-head">
+          <div class="sec-title"><div class="sec-icon">💳</div>Compras emergenciais por CG</div>
+          <span class="sec-badge" id="cartao-mes-badge">—</span>
+        </div>
+        <table class="bt">
+          <thead>
+            <tr>
+              <th>Unidade</th>
+              <th>Gasto</th>
+              <th>Orçado</th>
+              <th>Δ Saldo</th>
+              <th>Progresso</th>
+              <th style="text-align:right">%</th>
+            </tr>
+          </thead>
+          <tbody id="cartao-tbody">
+            <tr><td colspan="6"><div class="emp"><div class="emp-ico">⏳</div><div class="emp-ttl">Carregando…</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Notas lançadas -->
+      <div class="sec-card" style="margin-top:24px">
+        <div class="sec-head">
+          <div class="sec-title"><div class="sec-icon">📄</div>Notas lançadas</div>
+          <span class="sec-badge" id="cartao-nf-count">— registros</span>
+        </div>
+        <table class="nt">
+          <thead>
+            <tr><th>Nº NF</th><th>Fornecedor</th><th>CG</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Anexo</th></tr>
+          </thead>
+          <tbody id="cartao-nf-body">
+            <tr><td colspan="7"><div class="emp"><div class="emp-ico">📭</div><div class="emp-ttl">Nenhuma nota encontrada</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- CONFIG -->
     <section class="page" id="page-config">
       <div class="fb">
@@ -640,6 +703,7 @@ function goTo(p) {
   document.getElementById('pg-sub').textContent   = PM[p].sub;
   if (p==='lista') renderLista();
   if (p==='dashboard') refreshDash();
+  if (p==='cartao') renderCartao();
 }
 
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -999,6 +1063,102 @@ function onMonthChange(v) { if(v){ S.mes=v; setMlabel(v); S.nfs=[];S.budget=[];r
 
 // Init
 setMlabel(S.mes);
+// ─── CARTÃO CORPORATIVO ────────────────────────────────────────────────────
+function renderCartao() {
+  // Filtra NFs do mês atual com categoria Compras emergenciais
+  const mesNFs = S.nfs.filter(n => (n.mes||'') === S.mes && (n.categoria||'') === 'Compras emergenciais');
+
+  // Agrupa gasto por CG
+  const gastoMap = {};
+  mesNFs.forEach(n => {
+    const cg = n.cg || 'Não especificado';
+    gastoMap[cg] = (gastoMap[cg] || 0) + (parseFloat(n.valor) || 0);
+  });
+
+  // Pega budget de "Compras emergenciais" por CG
+  const cgs = [...new Set([
+    ...S.budget.filter(b => !b.isTotal).map(b => b.cg),
+    ...Object.keys(gastoMap)
+  ])];
+
+  let totalGasto = 0, totalOrcado = 0;
+
+  // Atualiza badge do mês
+  const mesEl = document.getElementById('cartao-mes-badge');
+  if (mesEl) mesEl.textContent = mlabel(S.mes);
+
+  // Renderiza tabela por CG
+  const tbody = document.getElementById('cartao-tbody');
+  if (!cgs.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="emp"><div class="emp-ico">💳</div><div class="emp-ttl">Sem dados de compras emergenciais</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = cgs.map(cg => {
+      const gt = gastoMap[cg] || 0;
+      const budgetEntry = S.budget.find(b => b.cg === cg && b.categoria === 'Compras emergenciais');
+      const bt = budgetEntry ? budgetEntry.budget : 0;
+      totalGasto  += gt;
+      totalOrcado += bt;
+      const pct = bt > 0 ? Math.min(Math.round((gt/bt)*100), 100) : 0;
+      const cls = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : '';
+      const delta = bt - gt;
+      const dColor = delta < 0 ? 'var(--red)' : bt === 0 ? 'var(--text-dim)' : 'var(--green)';
+      const dBg    = delta < 0 ? 'var(--red-bg)' : bt === 0 ? 'var(--surface2)' : 'var(--green-bg)';
+      const dLabel = bt === 0 ? '—' : delta < 0
+        ? `⚠ estourou R$ ${Math.abs(delta).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
+        : `✓ faltam R$ ${delta.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:13px 20px"><span class="cg-chip">${cg}</span></td>
+        <td style="padding:13px 20px;font-family:var(--font-display);font-weight:800">R$ ${gt.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="padding:13px 20px;font-weight:600;color:var(--text-muted)">R$ ${bt.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="padding:13px 20px"><span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:${dBg};color:${dColor};white-space:nowrap">${dLabel}</span></td>
+        <td style="padding:13px 20px"><div class="bar-w"><div class="bar-tr"><div class="bar-fi ${cls}" style="width:${pct}%"></div></div></div></td>
+        <td style="padding:13px 20px;text-align:right"><span class="pct-b ${cls||''}${bt===0?' none':''}">${bt>0?pct+'%':'—'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Stats cards
+  const deltaTotal = totalOrcado - totalGasto;
+  document.getElementById('cartao-total').textContent = `R$ ${totalGasto.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+  document.getElementById('cartao-orcado').textContent = `R$ ${totalOrcado.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+
+  const pctTotal = totalOrcado > 0 ? Math.round((totalGasto/totalOrcado)*100) : 0;
+  const pctEl = document.getElementById('cartao-pct-total');
+  if (pctEl) { pctEl.textContent = totalOrcado > 0 ? `${pctTotal}% do orçamento` : '—'; pctEl.className = `sc-meta ${pctTotal>=100?'danger':pctTotal>=80?'warn':'ok'}`; }
+
+  const deltaEl = document.getElementById('cartao-delta');
+  const deltaSubEl = document.getElementById('cartao-delta-sub');
+  if (deltaEl) {
+    if (totalOrcado === 0) { deltaEl.textContent = '—'; deltaEl.style.color = ''; }
+    else if (deltaTotal < 0) { deltaEl.textContent = `- R$ ${Math.abs(deltaTotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}`; deltaEl.style.color = 'var(--red)'; deltaSubEl.textContent = 'orçamento estourado'; }
+    else { deltaEl.textContent = `R$ ${deltaTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}`; deltaEl.style.color = 'var(--green)'; deltaSubEl.textContent = 'disponível para gastar'; }
+  }
+
+  // Tabela de NFs
+  const nfTbody = document.getElementById('cartao-nf-body');
+  const nfCount = document.getElementById('cartao-nf-count');
+  if (nfCount) nfCount.textContent = `${mesNFs.length} registro${mesNFs.length!==1?'s':''}`;
+  if (!mesNFs.length) {
+    nfTbody.innerHTML = `<tr><td colspan="7"><div class="emp"><div class="emp-ico">📭</div><div class="emp-ttl">Nenhuma nota lançada neste mês</div></div></td></tr>`;
+  } else {
+    nfTbody.innerHTML = mesNFs.map(n => {
+      const st = (n.status||'Pendente').toLowerCase();
+      const venc = n.vencimento ? new Date(n.vencimento+'T00:00:00').toLocaleDateString('pt-BR') : '—';
+      const val  = n.valor ? `R$ ${parseFloat(n.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}` : '—';
+      const ax   = n.driveUrl ? `<a href="${n.driveUrl}" target="_blank" style="color:var(--purple);font-weight:700;font-size:12px">ver ↗</a>` : `<span style="color:var(--text-dim)">—</span>`;
+      return `<tr>
+        <td style="padding:12px 20px"><span class="nf-num">${n.nf||'—'}</span></td>
+        <td style="padding:12px 20px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">${n.fornecedor||'—'}</td>
+        <td style="padding:12px 20px"><span class="cg-chip">${n.cg||'—'}</span></td>
+        <td style="padding:12px 20px;font-size:12.5px;font-weight:600;color:var(--text-muted)">${venc}</td>
+        <td style="padding:12px 20px"><span class="val-txt">${val}</span></td>
+        <td style="padding:12px 20px"><span class="st-badge ${st}">${n.status||'Pendente'}</span></td>
+        <td style="padding:12px 20px">${ax}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
 if(S.gasUrl)setGas(true);
 refreshDash();
 
