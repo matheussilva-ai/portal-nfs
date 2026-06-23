@@ -1067,7 +1067,16 @@ setMlabel(S.mes);
 // ─── CARTÃO CORPORATIVO ────────────────────────────────────────────────────
 function renderCartao() {
   // Filtra NFs do mês atual com categoria Compras emergenciais
-  const mesNFs = S.nfs.filter(n => (n.mes||'') === S.mes && (n.categoria||'') === 'Compras emergenciais');
+  // S.mes = "2026-06", n.mes pode ser "Junho" ou "2026-06" — normaliza para comparar
+  const MESES_PT = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const mesAtualNum = S.mes ? parseInt(S.mes.split('-')[1]) : 0;
+  const mesAtualNome = mesAtualNum > 0 ? MESES_PT[mesAtualNum-1] : '';
+  const mesNFs = S.nfs.filter(n => {
+    if ((n.categoria||'') !== 'Compras emergenciais') return false;
+    const nm = (n.mes||'').toLowerCase().trim();
+    // Aceita "Junho", "junho", "2026-06"
+    return nm === mesAtualNome || nm === S.mes || nm === String(mesAtualNum);
+  });
 
   // Agrupa gasto por CG
   const gastoMap = {};
