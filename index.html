@@ -821,6 +821,7 @@ async function refreshDash(){
   const tb=S.budget.filter(b=>b.isTotal).reduce((s,b)=>s+(b.budget||0),0);
   if(tb>0){const p=Math.round((tot/tb)*100);const el=document.getElementById('s-pct');el.textContent=`${p}% do orçamento`;el.className=`sc-meta ${p>=100?'danger':p>=80?'warn':'ok'}`;}
   renderBudget(mn);renderRecent(mn.slice(0,10));
+  if(document.getElementById('page-cartao').classList.contains('active')) renderCartao();
 }
 
 window._exp=new Set();
