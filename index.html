@@ -1246,7 +1246,7 @@ async function massaProcessar() {
   "nf_numero": "número da NF",
   "valor_nf": 0.00,
   "data_vencimento": "YYYY-MM-DD",
-  "mes_referencia": "YYYY-MM",
+  "mes_referencia": "YYYY-MM (ano e mês da data_emissao — NUNCA use o dia como mês)",
   "cg_sugerida": "unidade identificada pelo endereço do destinatário",
   "confianca_cg": "alta|media|baixa",
   "categoria_sugerida": "categoria do serviço",
@@ -1415,7 +1415,12 @@ async function massaLancarTodos() {
     const nfName = r.file.name.replace('.pdf','').replace('.PDF','');
     try {
       const b64 = await f2b(r.file);
-      const mesEmissao = r.data.mes_referencia || S.mes;
+      // Usa mes_referencia só se vier no formato exato YYYY-MM e mês plausível
+      let mesEmissao = S.mes;
+      if (r.data.mes_referencia && /^\d{4}-\d{2}$/.test(r.data.mes_referencia)) {
+        const mesNum = parseInt(r.data.mes_referencia.split('-')[1]);
+        if (mesNum >= 1 && mesNum <= 12) mesEmissao = r.data.mes_referencia;
+      }
       const payload = {
         action: 'lancarNF',
         mes: mesEmissao,
