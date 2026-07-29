@@ -272,7 +272,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="nav-item" data-page="lancar" href="#"><span class="nav-icon">➕</span>Lançar NF</a>
     <a class="nav-item" data-page="massa" href="#"><span class="nav-icon">📦</span>Lançamento em massa</a>
     <a class="nav-item" data-page="lista" href="#"><span class="nav-icon">📋</span>Notas lançadas</a>
-    <a class="nav-item" data-page="cartao" href="#"><span class="nav-icon">💳</span>Cartão Corporativo</a>
     <div class="nav-lbl">Sistema</div>
     <a class="nav-item" data-page="config" href="#"><span class="nav-icon">⚙️</span>Configurar</a>
   </div>
@@ -288,7 +287,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="mob-item" data-page="lancar" href="#"><span class="mob-icon">➕</span>Lançar</a>
     <a class="mob-item" data-page="massa" href="#"><span class="mob-icon">📦</span>Massa</a>
     <a class="mob-item" data-page="lista" href="#"><span class="mob-icon">📋</span>Notas</a>
-    <a class="mob-item" data-page="cartao" href="#"><span class="mob-icon">💳</span>Cartão</a>
     <a class="mob-item" data-page="config" href="#"><span class="mob-icon">⚙️</span>Config</a>
   </div>
 </nav>
@@ -512,6 +510,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
               <button onclick="massaAplicarCategoria()" class="btn btn-p btn-sm" style="padding:6px 14px;font-size:12px">Aplicar a todas</button>
             </div>
           </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px">MÊS REF.</span>
+            <select id="massa-mes-all" style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-weight:600;outline:none;cursor:pointer">
+              <option value="">-- selecione --</option>
+              <option value="2026-01">Janeiro 2026</option>
+              <option value="2026-02">Fevereiro 2026</option>
+              <option value="2026-03">Março 2026</option>
+              <option value="2026-04">Abril 2026</option>
+              <option value="2026-05">Maio 2026</option>
+              <option value="2026-06">Junho 2026</option>
+              <option value="2026-07">Julho 2026</option>
+              <option value="2026-08">Agosto 2026</option>
+              <option value="2026-09">Setembro 2026</option>
+              <option value="2026-10">Outubro 2026</option>
+              <option value="2026-11">Novembro 2026</option>
+              <option value="2026-12">Dezembro 2026</option>
+            </select>
+            <button onclick="massaAplicarMes()" class="btn btn-p btn-sm" style="padding:6px 14px;font-size:12px">Aplicar a todas</button>
+            </div>
+          </div>
           <div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;min-width:900px">
               <thead>
@@ -523,6 +541,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
                   <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Categoria</th>
                   <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Valor</th>
                   <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Vencimento</th>
+                  <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Mês Ref.</th>
                   <th style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)">Status</th>
                 </tr>
               </thead>
@@ -536,67 +555,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
             </button>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- CARTÃO CORPORATIVO -->
-    <section class="page" id="page-cartao">
-      <!-- Stats top -->
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
-        <div class="stat-card sc-purple"><div class="sc-bar"></div><div class="sc-icon">💳</div>
-          <div class="sc-label">Total gasto (Compras emerg.)</div>
-          <div class="sc-value" id="cartao-total">R$ —</div>
-          <div class="sc-meta" id="cartao-pct-total">—</div>
-        </div>
-        <div class="stat-card sc-yellow"><div class="sc-bar"></div><div class="sc-icon">📋</div>
-          <div class="sc-label">Orçado total</div>
-          <div class="sc-value" id="cartao-orcado">R$ —</div>
-          <div class="sc-meta">orçamento disponível</div>
-        </div>
-        <div class="stat-card sc-blue"><div class="sc-bar"></div><div class="sc-icon">📊</div>
-          <div class="sc-label">Δ Saldo disponível</div>
-          <div class="sc-value" id="cartao-delta">—</div>
-          <div class="sc-meta" id="cartao-delta-sub">—</div>
-        </div>
-      </div>
-
-      <!-- Budget por CG -->
-      <div class="sec-card">
-        <div class="sec-head">
-          <div class="sec-title"><div class="sec-icon">💳</div>Compras emergenciais por CG</div>
-          <span class="sec-badge" id="cartao-mes-badge">—</span>
-        </div>
-        <table class="bt">
-          <thead>
-            <tr>
-              <th>Unidade</th>
-              <th>Gasto</th>
-              <th>Orçado</th>
-              <th>Δ Saldo</th>
-              <th>Progresso</th>
-              <th style="text-align:right">%</th>
-            </tr>
-          </thead>
-          <tbody id="cartao-tbody">
-            <tr><td colspan="6"><div class="emp"><div class="emp-ico">⏳</div><div class="emp-ttl">Carregando…</div></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Notas lançadas -->
-      <div class="sec-card" style="margin-top:24px">
-        <div class="sec-head">
-          <div class="sec-title"><div class="sec-icon">📄</div>Notas lançadas</div>
-          <span class="sec-badge" id="cartao-nf-count">— registros</span>
-        </div>
-        <table class="nt">
-          <thead>
-            <tr><th>Nº NF</th><th>Fornecedor</th><th>CG</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Anexo</th></tr>
-          </thead>
-          <tbody id="cartao-nf-body">
-            <tr><td colspan="7"><div class="emp"><div class="emp-ico">📭</div><div class="emp-ttl">Nenhuma nota encontrada</div></div></td></tr>
-          </tbody>
-        </table>
       </div>
     </section>
 
@@ -675,7 +633,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="load-ov" id="load-ov"><div class="spin-w"><div class="spin"></div><div class="spin-lbl">Aguarde…</div></div></div>
 
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbz4yYyrctfRwIAwqyqRGbp7sRBV7V4ZwxwJL7wMuiD_BR5qX3lzItIcwNumypcD8ngr/exec';
+const GAS = 'https://script.google.com/macros/s/AKfycbyIIpyrQZMeUYVw78O0Xbp5vWZuPBDZTudveLc_CiRw9BSODsJeisZ63z-B-Yf533xB/exec';
 const S = {
   gasUrl: localStorage.getItem('gasUrl') || GAS,
   mes:    new Date().toISOString().slice(0,7),
@@ -686,12 +644,10 @@ const S = {
 };
 
 const PM = {
-  dashboard:{ title:'Dashboard',          sub:'Visão geral do mês' },
-  lancar:   { title:'Lançar NF',          sub:'Adicionar nova nota fiscal' },
-  massa:    { title:'Lançamento em Massa', sub:'Upload e revisão de múltiplas NFs' },
-  lista:    { title:'Notas lançadas',     sub:'Histórico e filtros' },
-  cartao:   { title:'Cartão Corporativo', sub:'Compras emergenciais por CG' },
-  config:   { title:'Configuração',       sub:'Apps Script e integrações' },
+  dashboard:{ title:'Dashboard',      sub:'Visão geral do mês' },
+  lancar:   { title:'Lançar NF',       sub:'Adicionar nova nota fiscal' },
+  lista:    { title:'Notas lançadas',  sub:'Histórico e filtros' },
+  config:   { title:'Configuração',    sub:'Apps Script e integrações' },
 };
 
 document.querySelectorAll('.nav-item,.mob-item').forEach(el =>
@@ -705,7 +661,6 @@ function goTo(p) {
   document.getElementById('pg-sub').textContent   = PM[p].sub;
   if (p==='lista') renderLista();
   if (p==='dashboard') refreshDash();
-  if (p==='cartao') renderCartao();
 }
 
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -823,7 +778,6 @@ async function refreshDash(){
   const tb=S.budget.filter(b=>b.isTotal).reduce((s,b)=>s+(b.budget||0),0);
   if(tb>0){const p=Math.round((tot/tb)*100);const el=document.getElementById('s-pct');el.textContent=`${p}% do orçamento`;el.className=`sc-meta ${p>=100?'danger':p>=80?'warn':'ok'}`;}
   renderBudget(mn);renderRecent(mn.slice(0,10));
-  if(document.getElementById('page-cartao').classList.contains('active')) renderCartao();
 }
 
 window._exp=new Set();
@@ -1066,111 +1020,6 @@ function onMonthChange(v) { if(v){ S.mes=v; setMlabel(v); S.nfs=[];S.budget=[];r
 
 // Init
 setMlabel(S.mes);
-// ─── CARTÃO CORPORATIVO ────────────────────────────────────────────────────
-function renderCartao() {
-  // Filtra NFs do mês atual com categoria Compras emergenciais
-  // S.mes = "2026-06", n.mes pode ser "Junho" ou "2026-06" — normaliza para comparar
-  const MESES_PT = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  const mesAtualNum = S.mes ? parseInt(S.mes.split('-')[1]) : 0;
-  const mesAtualNome = mesAtualNum > 0 ? MESES_PT[mesAtualNum-1] : '';
-  const mesNFs = S.nfs.filter(n => {
-    if ((n.categoria||'') !== 'Compras emergenciais') return false;
-    const nm = (n.mes||'').toLowerCase().trim();
-    // Aceita "Junho", "junho", "2026-06"
-    return nm === mesAtualNome || nm === S.mes || nm === String(mesAtualNum);
-  });
-
-  // Agrupa gasto por CG
-  const gastoMap = {};
-  mesNFs.forEach(n => {
-    const cg = n.cg || 'Não especificado';
-    gastoMap[cg] = (gastoMap[cg] || 0) + (parseFloat(n.valor) || 0);
-  });
-
-  // Pega budget de "Compras emergenciais" por CG
-  const cgs = [...new Set([
-    ...S.budget.filter(b => !b.isTotal).map(b => b.cg),
-    ...Object.keys(gastoMap)
-  ])];
-
-  let totalGasto = 0, totalOrcado = 0;
-
-  // Atualiza badge do mês
-  const mesEl = document.getElementById('cartao-mes-badge');
-  if (mesEl) mesEl.textContent = mlabel(S.mes);
-
-  // Renderiza tabela por CG
-  const tbody = document.getElementById('cartao-tbody');
-  if (!cgs.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="emp"><div class="emp-ico">💳</div><div class="emp-ttl">Sem dados de compras emergenciais</div></div></td></tr>`;
-  } else {
-    tbody.innerHTML = cgs.map(cg => {
-      const gt = gastoMap[cg] || 0;
-      const budgetEntry = S.budget.find(b => b.cg === cg && b.categoria === 'Compras emergenciais');
-      const bt = budgetEntry ? budgetEntry.budget : 0;
-      totalGasto  += gt;
-      totalOrcado += bt;
-      const pct = bt > 0 ? Math.min(Math.round((gt/bt)*100), 100) : 0;
-      const cls = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : '';
-      const delta = bt - gt;
-      const dColor = delta < 0 ? 'var(--red)' : bt === 0 ? 'var(--text-dim)' : 'var(--green)';
-      const dBg    = delta < 0 ? 'var(--red-bg)' : bt === 0 ? 'var(--surface2)' : 'var(--green-bg)';
-      const dLabel = bt === 0 ? '—' : delta < 0
-        ? `⚠ estourou R$ ${Math.abs(delta).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
-        : `✓ faltam R$ ${delta.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-      return `<tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:13px 20px"><span class="cg-chip">${cg}</span></td>
-        <td style="padding:13px 20px;font-family:var(--font-display);font-weight:800">R$ ${gt.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="padding:13px 20px;font-weight:600;color:var(--text-muted)">R$ ${bt.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="padding:13px 20px"><span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:${dBg};color:${dColor};white-space:nowrap">${dLabel}</span></td>
-        <td style="padding:13px 20px"><div class="bar-w"><div class="bar-tr"><div class="bar-fi ${cls}" style="width:${pct}%"></div></div></div></td>
-        <td style="padding:13px 20px;text-align:right"><span class="pct-b ${cls||''}${bt===0?' none':''}">${bt>0?pct+'%':'—'}</span></td>
-      </tr>`;
-    }).join('');
-  }
-
-  // Stats cards
-  const deltaTotal = totalOrcado - totalGasto;
-  document.getElementById('cartao-total').textContent = `R$ ${totalGasto.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  document.getElementById('cartao-orcado').textContent = `R$ ${totalOrcado.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-
-  const pctTotal = totalOrcado > 0 ? Math.round((totalGasto/totalOrcado)*100) : 0;
-  const pctEl = document.getElementById('cartao-pct-total');
-  if (pctEl) { pctEl.textContent = totalOrcado > 0 ? `${pctTotal}% do orçamento` : '—'; pctEl.className = `sc-meta ${pctTotal>=100?'danger':pctTotal>=80?'warn':'ok'}`; }
-
-  const deltaEl = document.getElementById('cartao-delta');
-  const deltaSubEl = document.getElementById('cartao-delta-sub');
-  if (deltaEl) {
-    if (totalOrcado === 0) { deltaEl.textContent = '—'; deltaEl.style.color = ''; }
-    else if (deltaTotal < 0) { deltaEl.textContent = `- R$ ${Math.abs(deltaTotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}`; deltaEl.style.color = 'var(--red)'; deltaSubEl.textContent = 'orçamento estourado'; }
-    else { deltaEl.textContent = `R$ ${deltaTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}`; deltaEl.style.color = 'var(--green)'; deltaSubEl.textContent = 'disponível para gastar'; }
-  }
-
-  // Tabela de NFs
-  const nfTbody = document.getElementById('cartao-nf-body');
-  const nfCount = document.getElementById('cartao-nf-count');
-  if (nfCount) nfCount.textContent = `${mesNFs.length} registro${mesNFs.length!==1?'s':''}`;
-  if (!mesNFs.length) {
-    nfTbody.innerHTML = `<tr><td colspan="7"><div class="emp"><div class="emp-ico">📭</div><div class="emp-ttl">Nenhuma nota lançada neste mês</div></div></td></tr>`;
-  } else {
-    nfTbody.innerHTML = mesNFs.map(n => {
-      const st = (n.status||'Pendente').toLowerCase();
-      const venc = n.vencimento ? new Date(n.vencimento+'T00:00:00').toLocaleDateString('pt-BR') : '—';
-      const val  = n.valor ? `R$ ${parseFloat(n.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}` : '—';
-      const ax   = n.driveUrl ? `<a href="${n.driveUrl}" target="_blank" style="color:var(--purple);font-weight:700;font-size:12px">ver ↗</a>` : `<span style="color:var(--text-dim)">—</span>`;
-      return `<tr>
-        <td style="padding:12px 20px"><span class="nf-num">${n.nf||'—'}</span></td>
-        <td style="padding:12px 20px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">${n.fornecedor||'—'}</td>
-        <td style="padding:12px 20px"><span class="cg-chip">${n.cg||'—'}</span></td>
-        <td style="padding:12px 20px;font-size:12.5px;font-weight:600;color:var(--text-muted)">${venc}</td>
-        <td style="padding:12px 20px"><span class="val-txt">${val}</span></td>
-        <td style="padding:12px 20px"><span class="st-badge ${st}">${n.status||'Pendente'}</span></td>
-        <td style="padding:12px 20px">${ax}</td>
-      </tr>`;
-    }).join('');
-  }
-}
-
 if(S.gasUrl)setGas(true);
 refreshDash();
 
@@ -1246,7 +1095,7 @@ async function massaProcessar() {
   "nf_numero": "número da NF",
   "valor_nf": 0.00,
   "data_vencimento": "YYYY-MM-DD",
-  "mes_referencia": "YYYY-MM (ano e mês da data_emissao — NUNCA use o dia como mês)",
+  "mes_referencia": "YYYY-MM",
   "cg_sugerida": "unidade identificada pelo endereço do destinatário",
   "confianca_cg": "alta|media|baixa",
   "categoria_sugerida": "categoria do serviço",
@@ -1262,7 +1111,17 @@ Categorias: ${CAT_OPTS.join(', ')}.`
         const result = JSON.parse(raw);
         // Normaliza valor para número puro
         if (result.valor_nf !== undefined) result.valor_nf = parseSafeFloat(result.valor_nf);
-        M.results[idx] = { ...M.results[idx], data: result, status: result.confianca_cg === 'alta' ? 'ok' : 'review' };
+        // Detecta anomalia de mês: se Gemini identificou mês diferente do portal → review
+        const mesGemini = result.mes_referencia || '';
+        const mesPortal = S.mes || '';
+        const mesOk = !mesGemini || mesGemini === mesPortal;
+        const cgOk  = result.confianca_cg === 'alta';
+        let novoStatus = (cgOk && mesOk) ? 'ok' : 'review';
+        // Guarda motivo do review para mostrar tooltip
+        let reviewMotivo = [];
+        if (!cgOk)  reviewMotivo.push('CG incerta');
+        if (!mesOk) reviewMotivo.push(`Mês detectado: ${mlabel(mesGemini)} (esperado: ${mlabel(mesPortal)})`);
+        M.results[idx] = { ...M.results[idx], data: result, status: novoStatus, reviewMotivo: reviewMotivo.join(' · ') };
       } catch(e) {
         M.results[idx] = { ...M.results[idx], status: 'error', error: e.message };
       }
@@ -1345,9 +1204,30 @@ function renderMassaTabela() {
           style="padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-weight:600;outline:none"
           onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">`}
       </td>
+      <td style="padding:10px 16px;vertical-align:middle">
+        ${isErr ? '—' : `
+        <select onchange="massaUpdate(${i},'mes_referencia',this.value)"
+          style="padding:5px 8px;border-radius:6px;border:1.5px solid ${d.mes_referencia&&d.mes_referencia!==S.mes?'var(--yellow)':'var(--border)'};background:${d.mes_referencia&&d.mes_referencia!==S.mes?'var(--yellow-bg)':'var(--bg)'};color:var(--text);font-size:12px;font-weight:700;outline:none;cursor:pointer"
+          onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
+          <option value="2026-01" ${d.mes_referencia==='2026-01'?'selected':''}>Jan/26</option>
+          <option value="2026-02" ${d.mes_referencia==='2026-02'?'selected':''}>Fev/26</option>
+          <option value="2026-03" ${d.mes_referencia==='2026-03'?'selected':''}>Mar/26</option>
+          <option value="2026-04" ${d.mes_referencia==='2026-04'?'selected':''}>Abr/26</option>
+          <option value="2026-05" ${d.mes_referencia==='2026-05'?'selected':''}>Mai/26</option>
+          <option value="2026-06" ${d.mes_referencia==='2026-06'?'selected':''}>Jun/26</option>
+          <option value="2026-07" ${d.mes_referencia==='2026-07'?'selected':''}>Jul/26</option>
+          <option value="2026-08" ${d.mes_referencia==='2026-08'?'selected':''}>Ago/26</option>
+          <option value="2026-09" ${d.mes_referencia==='2026-09'?'selected':''}>Set/26</option>
+          <option value="2026-10" ${d.mes_referencia==='2026-10'?'selected':''}>Out/26</option>
+          <option value="2026-11" ${d.mes_referencia==='2026-11'?'selected':''}>Nov/26</option>
+          <option value="2026-12" ${d.mes_referencia==='2026-12'?'selected':''}>Dez/26</option>
+        </select>`}
+      </td>
       <td style="padding:10px 16px;vertical-align:middle;text-align:center">
-        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:${statusBg};color:${statusColor}">
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:${statusBg};color:${statusColor}"
+          title="${needReview && r.reviewMotivo ? r.reviewMotivo : ''}">
           ${statusIcon} ${isErr?'Erro':needReview?'Revisar':'Pronto'}
+          ${needReview && r.reviewMotivo ? `<span style="font-size:10px;opacity:.8">ⓘ</span>` : ''}
         </span>
       </td>
     </tr>`;
@@ -1415,12 +1295,7 @@ async function massaLancarTodos() {
     const nfName = r.file.name.replace('.pdf','').replace('.PDF','');
     try {
       const b64 = await f2b(r.file);
-      // Usa mes_referencia só se vier no formato exato YYYY-MM e mês plausível
-      let mesEmissao = S.mes;
-      if (r.data.mes_referencia && /^\d{4}-\d{2}$/.test(r.data.mes_referencia)) {
-        const mesNum = parseInt(r.data.mes_referencia.split('-')[1]);
-        if (mesNum >= 1 && mesNum <= 12) mesEmissao = r.data.mes_referencia;
-      }
+      const mesEmissao = r.data.mes_referencia || S.mes;
       const payload = {
         action: 'lancarNF',
         mes: mesEmissao,
@@ -1467,6 +1342,15 @@ async function massaLancarTodos() {
       toast('Erro ao lançar', `${falha} NFs falharam`, 'error');
     }
   }, 1500);
+}
+
+function massaAplicarMes() {
+  const v = document.getElementById('massa-mes-all').value;
+  if (!v) return;
+  M.results.forEach(r => { if(r.data && r.status !== 'error') r.data.mes_referencia = v; });
+  renderMassaTabela();
+  const labels = {'2026-01':'Jan/26','2026-02':'Fev/26','2026-03':'Mar/26','2026-04':'Abr/26','2026-05':'Mai/26','2026-06':'Jun/26','2026-07':'Jul/26','2026-08':'Ago/26','2026-09':'Set/26','2026-10':'Out/26','2026-11':'Nov/26','2026-12':'Dez/26'};
+  toast(`Mês aplicado a todas ✓`, labels[v] || v, 'success');
 }
 
 function massaAplicarVencimento() {
