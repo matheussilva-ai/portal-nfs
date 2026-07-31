@@ -271,6 +271,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="nav-item active" data-page="dashboard" href="#"><span class="nav-icon">📊</span>Dashboard</a>
     <a class="nav-item" data-page="lancar" href="#"><span class="nav-icon">➕</span>Lançar NF</a>
     <a class="nav-item" data-page="massa" href="#"><span class="nav-icon">📦</span>Lançamento em massa</a>
+    <a class="nav-item" data-page="conferencia" href="#"><span class="nav-icon">✅</span>Conferência Mensal</a>
     <a class="nav-item" data-page="lista" href="#"><span class="nav-icon">📋</span>Notas lançadas</a>
     <div class="nav-lbl">Sistema</div>
     <a class="nav-item" data-page="config" href="#"><span class="nav-icon">⚙️</span>Configurar</a>
@@ -286,6 +287,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="mob-item active" data-page="dashboard" href="#"><span class="mob-icon">📊</span>Dashboard</a>
     <a class="mob-item" data-page="lancar" href="#"><span class="mob-icon">➕</span>Lançar</a>
     <a class="mob-item" data-page="massa" href="#"><span class="mob-icon">📦</span>Massa</a>
+    <a class="mob-item" data-page="conferencia" href="#"><span class="mob-icon">✅</span>Conferência</a>
     <a class="mob-item" data-page="lista" href="#"><span class="mob-icon">📋</span>Notas</a>
     <a class="mob-item" data-page="config" href="#"><span class="mob-icon">⚙️</span>Config</a>
   </div>
@@ -558,7 +560,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </section>
 
-    <!-- CONFIG -->
+    
+    <!-- CONFERÊNCIA MENSAL -->
+    <section class="page" id="page-conferencia">
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div>
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text)">Conferência de NFs Fixas</div>
+            <div id="conf-mes-lbl" style="font-size:12px;font-weight:600;color:var(--text-muted);margin-top:2px">—</div>
+          </div>
+          <div style="display:flex;gap:20px">
+            <div style="text-align:center"><div id="conf-ok-num" style="font-family:var(--font-display);font-size:24px;font-weight:900;color:var(--green)">—</div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)">OK</div></div>
+            <div style="text-align:center"><div id="conf-div-num" style="font-family:var(--font-display);font-size:24px;font-weight:900;color:var(--yellow)">—</div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)">Divergente</div></div>
+            <div style="text-align:center"><div id="conf-pend-num" style="font-family:var(--font-display);font-size:24px;font-weight:900;color:var(--red)">—</div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)">Pendente</div></div>
+          </div>
+        </div>
+        <div style="height:10px;background:var(--surface2);border-radius:999px;overflow:hidden">
+          <div id="conf-bar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,var(--green),#34D399);width:0%;transition:width .6s cubic-bezier(.34,1.56,.64,1)"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--text-muted)">Baseado nos lançamentos da planilha · tolerance ±5% no valor</div>
+        <button class="btn btn-p btn-sm" onclick="loadConferencia()">🔄 Atualizar</button>
+      </div>
+      <div id="conf-grupos"></div>
+    </section>
+
+<!-- CONFIG -->
     <section class="page" id="page-config">
       <div class="fb">
         <div class="fb-head"><div class="fb-step" style="background:var(--purple-mid)">⚙</div><div class="fb-title">Conexão com Apps Script</div></div>
@@ -647,7 +675,8 @@ const PM = {
   dashboard:{ title:'Dashboard',      sub:'Visão geral do mês' },
   lancar:   { title:'Lançar NF',       sub:'Adicionar nova nota fiscal' },
   lista:    { title:'Notas lançadas',  sub:'Histórico e filtros' },
-  config:   { title:'Configuração',    sub:'Apps Script e integrações' },
+  conferencia: { title:'Conferência Mensal', sub:'Verifique se todas as NFs fixas foram recebidas' },
+    config:   { title:'Configuração',    sub:'Apps Script e integrações' },
 };
 
 document.querySelectorAll('.nav-item,.mob-item').forEach(el =>
@@ -660,6 +689,7 @@ function goTo(p) {
   document.getElementById('pg-title').textContent = PM[p].title;
   document.getElementById('pg-sub').textContent   = PM[p].sub;
   if (p==='lista') renderLista();
+  if (p==='conferencia') loadConferencia();
   if (p==='dashboard') refreshDash();
 }
 
@@ -1536,9 +1566,19 @@ function applyAIResult(r) {
   if (r.descricao_servico) setField('f-com', r.descricao_servico);
 
   if (r.mes_referencia) {
-    S.mes = r.mes_referencia;
-    setMlabel(r.mes_referencia);
-    document.getElementById('month-input').value = r.mes_referencia;
+    const mesDetectado = r.mes_referencia;
+    const mesPortal    = S.mes;
+    if (mesDetectado !== mesPortal) {
+      // Mês divergente — mostra aviso, NÃO muda o portal automaticamente
+      const avisoEl = document.getElementById('ai-mes-aviso');
+      if (avisoEl) {
+        avisoEl.style.display = 'flex';
+        avisoEl.innerHTML = `⚠️ <span>A IA detectou que esta NF é de <b>${mlabel(mesDetectado)}</b>, mas o portal está em <b>${mlabel(mesPortal)}</b>. 
+          <button onclick="aplicarMesDetectado('${mesDetectado}')" style="margin-left:8px;padding:3px 10px;border-radius:6px;border:none;background:var(--yellow);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Usar ${mlabel(mesDetectado)}</button>
+          <button onclick="document.getElementById('ai-mes-aviso').style.display='none'" style="margin-left:4px;padding:3px 10px;border-radius:6px;border:none;background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:700;cursor:pointer">Manter ${mlabel(mesPortal)}</button>
+        </span>`;
+      }
+    }
   }
 
   // CG — preenche se o campo estiver vazio; se já preenchido, não toca
@@ -1571,6 +1611,186 @@ function applyAIResult(r) {
 
   toast('Campos preenchidos pela IA ✨', 'Revise e ajuste se necessário', 'success');
 }
+
+function aplicarMesDetectado(mes) {
+  S.mes = mes;
+  setMlabel(mes);
+  const monthInput = document.getElementById('month-input');
+  if (monthInput) monthInput.value = mes;
+  document.getElementById('ai-mes-aviso').style.display = 'none';
+  toast('Mês atualizado para ' + mlabel(mes), '', 'success');
+}
+// ─── CONFERÊNCIA MENSAL ──────────────────────────────────────────────────────
+const NFS_FIXAS = [
+  // MAIS AR
+  { id:'mair-alp', forn:'MAIS AR',         cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Ar-condicionado | Manutenção Preventiva', valor:1837.00 },
+  { id:'mair-mor', forn:'MAIS AR',         cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Ar-condicionado | Manutenção Preventiva', valor:3395.25 },
+  { id:'mair-tat', forn:'MAIS AR',         cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Ar-condicionado | Manutenção Preventiva', valor:1837.00 },
+  { id:'mair-esc', forn:'MAIS AR',         cgPortal:'Escritório',        cgPlan:'Escritório',        cat:'Ar-condicionado | Manutenção Preventiva', valor:2101.00 },
+  { id:'mair-par', forn:'MAIS AR',         cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Ar-condicionado | Manutenção Preventiva', valor:2985.30 },
+  { id:'mair-san', forn:'MAIS AR',         cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Ar-condicionado | Manutenção Preventiva', valor:2370.00 },
+  { id:'mair-pin', forn:'MAIS AR',         cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Ar-condicionado | Manutenção Preventiva', valor:334.00  },
+  { id:'mair-ana', forn:'MAIS AR',         cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Ar-condicionado | Manutenção Preventiva', valor:2254.50 },
+  // GHC
+  { id:'ghc-par',  forn:'GHC',             cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Manutenção predial | Preventiva', valor:4356.79 },
+  { id:'ghc-san',  forn:'GHC',             cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Manutenção predial | Preventiva', valor:4351.06 },
+  { id:'ghc-tat',  forn:'GHC',             cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Manutenção predial | Preventiva', valor:3523.42 },
+  { id:'ghc-ana',  forn:'GHC',             cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Manutenção predial | Preventiva', valor:3523.42 },
+  { id:'ghc-alp',  forn:'GHC',             cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Manutenção predial | Preventiva', valor:3108.89 },
+  { id:'ghc-mor',  forn:'GHC',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Manutenção predial | Preventiva', valor:4558.71 },
+  { id:'ghc-pin',  forn:'GHC',             cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Manutenção predial | Preventiva', valor:4558.71 },
+  // FÊNIX
+  { id:'fenix-alp',forn:'FÊNIX',           cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Segurança | Serviços de Terceiros', valor:1380.00 },
+  { id:'fenix-ana',forn:'FÊNIX',           cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Segurança | Serviços de Terceiros', valor:690.00  },
+  { id:'fenix-esc',forn:'FÊNIX',           cgPortal:'Escritório',        cgPlan:'Escritório',        cat:'Segurança | Serviços de Terceiros', valor:420.00  },
+  { id:'fenix-mor',forn:'FÊNIX',           cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Segurança | Serviços de Terceiros', valor:1770.00 },
+  { id:'fenix-par',forn:'FÊNIX',           cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Segurança | Serviços de Terceiros', valor:670.00  },
+  { id:'fenix-pin',forn:'FÊNIX',           cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Segurança | Serviços de Terceiros', valor:690.00  },
+  { id:'fenix-san',forn:'FÊNIX',           cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Segurança | Serviços de Terceiros', valor:690.00  },
+  { id:'fenix-tat',forn:'FÊNIX',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:840.00  },
+  // ATLAS
+  { id:'atlas-tat',forn:'ATLAS',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Elevador| Manutenção Preventiva', valor:595.80  },
+  // PK5
+  { id:'pk5-mor',  forn:'PK5',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Segurança | Serviços de Terceiros', valor:240.00  },
+  // GRUPO LIBERDADE
+  { id:'lib-tat',  forn:'GRUPO LIBERDADE', cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:7812.59 },
+];
+
+const CONF_GRUPOS = [
+  { id:'mais-ar',   label:'Mais Ar',         icon:'❄️',  ids:['mair-alp','mair-mor','mair-tat','mair-esc','mair-par','mair-san','mair-pin','mair-ana'] },
+  { id:'ghc',       label:'GHC',             icon:'🏗️',  ids:['ghc-par','ghc-san','ghc-tat','ghc-ana','ghc-alp','ghc-mor','ghc-pin'] },
+  { id:'fenix',     label:'Fênix',           icon:'🔒',  ids:['fenix-alp','fenix-ana','fenix-esc','fenix-mor','fenix-par','fenix-pin','fenix-san','fenix-tat'] },
+  { id:'atlas',     label:'Atlas',           icon:'🛗',  ids:['atlas-tat'] },
+  { id:'pk5',       label:'PK5',             icon:'🅿️',  ids:['pk5-mor'] },
+  { id:'liberdade', label:'Grupo Liberdade', icon:'🛡️',  ids:['lib-tat'] },
+];
+
+let _confResultados = {};
+let _confCollapsed  = new Set();
+
+async function loadConferencia() {
+  const mes = S.mes;
+  document.getElementById('conf-mes-lbl').textContent = mlabel(mes);
+  document.getElementById('conf-grupos').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
+
+  try {
+    const res  = await fetch(`${S.gasUrl}?action=getData&mes=${mes}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+
+    const nfs = json.nfs || [];
+    _confResultados = {};
+    const MARGEM = 0.05;
+
+    NFS_FIXAS.forEach(nf => {
+      // Busca lançamento que bata: fornecedor (parcial) + CG + mês
+      const match = nfs.find(n => {
+        const fornOk = (n.fornecedor||'').toUpperCase().includes(nf.forn.toUpperCase().slice(0,6)) ||
+                       nf.forn.toUpperCase().includes((n.fornecedor||'').toUpperCase().slice(0,6));
+        const cgOk   = (n.cg||'').replace('CG ','') === nf.cgPortal.replace('CG ','');
+        return fornOk && cgOk;
+      });
+
+      if (!match) {
+        _confResultados[nf.id] = { status: 'pendente' };
+      } else {
+        const valorEncontrado = parseFloat(match.valor) || 0;
+        const diff = Math.abs(valorEncontrado - nf.valor) / nf.valor;
+        _confResultados[nf.id] = {
+          status: diff <= MARGEM ? 'ok' : 'divergente',
+          valorEncontrado,
+          diff: Math.round(diff * 100),
+          nf: match.nf,
+        };
+      }
+    });
+
+    renderConferencia();
+  } catch(e) {
+    document.getElementById('conf-grupos').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--red)">❌ Erro: ${e.message}</div>`;
+  }
+}
+
+function renderConferencia() {
+  const total   = NFS_FIXAS.length;
+  const okCount = NFS_FIXAS.filter(n => _confResultados[n.id]?.status === 'ok').length;
+  const divCount= NFS_FIXAS.filter(n => _confResultados[n.id]?.status === 'divergente').length;
+  const pendCount= total - okCount - divCount;
+  const pct = total > 0 ? Math.round((okCount / total) * 100) : 0;
+
+  document.getElementById('conf-ok-num').textContent   = okCount;
+  document.getElementById('conf-div-num').textContent  = divCount;
+  document.getElementById('conf-pend-num').textContent = pendCount;
+  document.getElementById('conf-bar').style.width      = pct + '%';
+
+  const container = document.getElementById('conf-grupos');
+  container.innerHTML = CONF_GRUPOS.map(g => {
+    const items   = g.ids.map(id => NFS_FIXAS.find(n => n.id === id)).filter(Boolean);
+    const gdone   = items.filter(n => _confResultados[n.id]?.status === 'ok').length;
+    const gdiv    = items.filter(n => _confResultados[n.id]?.status === 'divergente').length;
+    const gtotal  = items.length;
+    const gpct    = gtotal > 0 ? Math.round(((gdone+gdiv)/gtotal)*100) : 0;
+    const allOk   = gdone === gtotal;
+    const isOpen  = !_confCollapsed.has(g.id);
+    const pctCls  = allOk ? 'ok' : gpct > 0 ? 'partial' : 'none';
+    const headBg  = allOk ? 'var(--green-bg)' : gdiv > 0 ? 'var(--yellow-bg)' : 'var(--surface2)';
+
+    const rows = items.map(nf => {
+      const r    = _confResultados[nf.id] || { status:'pendente' };
+      const icon = r.status==='ok' ? '✅' : r.status==='divergente' ? '⚠️' : '⏳';
+      const valEsp = nf.valor.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      const valEnc = r.valorEncontrado ? r.valorEncontrado.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+      const valColor = r.status==='ok' ? 'var(--green)' : r.status==='divergente' ? 'var(--yellow)' : 'var(--text-dim)';
+      const cgShort = nf.cgPortal.replace('CG ','');
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:10px 16px;font-size:15px">${icon}</td>
+        <td style="padding:10px 16px"><span style="font-size:12px;font-weight:800;color:var(--purple);background:var(--purple-light);border-radius:999px;padding:2px 8px">${cgShort}</span></td>
+        <td style="padding:10px 16px;font-size:13px;font-weight:600;color:var(--text)">${nf.cat}</td>
+        <td style="padding:10px 16px;font-size:13px;font-weight:700;color:var(--text-muted)">R$ ${valEsp}</td>
+        <td style="padding:10px 16px;font-size:13px;font-weight:700;color:${valColor}">${r.status==='pendente'?'—':'R$ '+valEnc}${r.status==='divergente'?` <span style="font-size:11px">(${r.diff}% dif)</span>`:''}</td>
+        <td style="padding:10px 16px;font-size:12px;color:var(--text-dim)">${r.nf||'—'}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow-sm)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:${headBg};cursor:pointer;transition:background .15s" onclick="confToggle('${g.id}')">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:22px">${g.icon}</span>
+          <div>
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text)">${g.label}</div>
+            <div style="font-size:11.5px;font-weight:600;color:var(--text-muted);margin-top:2px">${gdone}/${gtotal} OK${gdiv>0?' · '+gdiv+' divergente'+(gdiv>1?'s':''):''}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:80px;height:6px;background:var(--border);border-radius:999px;overflow:hidden">
+            <div style="height:100%;border-radius:999px;background:${allOk?'var(--green)':gpct>0?'var(--yellow)':'var(--red)'};width:${gpct}%;transition:width .4s"></div>
+          </div>
+          <span style="font-family:var(--font-display);font-size:12px;font-weight:800;color:${allOk?'var(--green)':gpct>0?'var(--yellow)':'var(--text-dim)'};min-width:34px;text-align:right">${gpct}%</span>
+          <span style="font-size:10px;color:var(--text-dim);transition:transform .2s;transform:${isOpen?'rotate(180deg)':'rotate(0)'}">▼</span>
+        </div>
+      </div>
+      ${isOpen ? `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:var(--surface2)">
+          <th style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left"></th>
+          <th style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left">UNIDADE</th>
+          <th style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left">CATEGORIA</th>
+          <th style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left">ESPERADO</th>
+          <th style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left">ENCONTRADO</th>
+          <th style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left">Nº NF</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function confToggle(id) {
+  _confCollapsed.has(id) ? _confCollapsed.delete(id) : _confCollapsed.add(id);
+  renderConferencia();
+}
+
 </script>
 </body>
 </html>
