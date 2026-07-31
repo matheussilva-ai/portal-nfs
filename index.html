@@ -1632,13 +1632,13 @@ const NFS_FIXAS = [
   { id:'mair-pin', forn:'MAIS AR',         cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Ar-condicionado | Manutenção Preventiva', valor:334.00  },
   { id:'mair-ana', forn:'MAIS AR',         cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Ar-condicionado | Manutenção Preventiva', valor:2254.50 },
   // GHC
-  { id:'ghc-par',  forn:'GHC',             cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Manutenção predial | Preventiva', valor:4356.79 },
-  { id:'ghc-san',  forn:'GHC',             cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Manutenção predial | Preventiva', valor:4351.06 },
-  { id:'ghc-tat',  forn:'GHC',             cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Manutenção predial | Preventiva', valor:3523.42 },
-  { id:'ghc-ana',  forn:'GHC',             cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Manutenção predial | Preventiva', valor:3523.42 },
-  { id:'ghc-alp',  forn:'GHC',             cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Manutenção predial | Preventiva', valor:3108.89 },
-  { id:'ghc-mor',  forn:'GHC',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Manutenção predial | Preventiva', valor:4558.71 },
-  { id:'ghc-pin',  forn:'GHC',             cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Manutenção predial | Preventiva', valor:4558.71 },
+  { id:'ghc-par',  forn:'HELP CENTER',             cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Manutenção predial | Preventiva', valor:4356.79 },
+  { id:'ghc-san',  forn:'HELP CENTER',             cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Manutenção predial | Preventiva', valor:4351.06 },
+  { id:'ghc-tat',  forn:'HELP CENTER',             cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Manutenção predial | Preventiva', valor:3523.42 },
+  { id:'ghc-ana',  forn:'HELP CENTER',             cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Manutenção predial | Preventiva', valor:3523.42 },
+  { id:'ghc-alp',  forn:'HELP CENTER',             cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Manutenção predial | Preventiva', valor:3108.89 },
+  { id:'ghc-mor',  forn:'HELP CENTER',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Manutenção predial | Preventiva', valor:4558.71 },
+  { id:'ghc-pin',  forn:'HELP CENTER',             cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Manutenção predial | Preventiva', valor:4558.71 },
   // FÊNIX
   { id:'fenix-alp',forn:'FÊNIX',           cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Segurança | Serviços de Terceiros', valor:1380.00 },
   { id:'fenix-ana',forn:'FÊNIX',           cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Segurança | Serviços de Terceiros', valor:690.00  },
@@ -1649,16 +1649,16 @@ const NFS_FIXAS = [
   { id:'fenix-san',forn:'FÊNIX',           cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Segurança | Serviços de Terceiros', valor:690.00  },
   { id:'fenix-tat',forn:'FÊNIX',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:840.00  },
   // ATLAS
-  { id:'atlas-tat',forn:'ATLAS',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Elevador| Manutenção Preventiva', valor:595.80  },
+  { id:'atlas-tat',forn:'Atlas Elevadores',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Elevador| Manutenção Preventiva', valor:595.80  },
   // PK5
-  { id:'pk5-mor',  forn:'PK5',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Segurança | Serviços de Terceiros', valor:240.00  },
+  { id:'pk5-mor',  forn:'PK.5 ESTACIONA',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Segurança | Serviços de Terceiros', valor:240.00  },
   // GRUPO LIBERDADE
   { id:'lib-tat',  forn:'GRUPO LIBERDADE', cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:7812.59 },
 ];
 
 const CONF_GRUPOS = [
   { id:'mais-ar',   label:'Mais Ar',         icon:'❄️',  ids:['mair-alp','mair-mor','mair-tat','mair-esc','mair-par','mair-san','mair-pin','mair-ana'] },
-  { id:'ghc',       label:'GHC',             icon:'🏗️',  ids:['ghc-par','ghc-san','ghc-tat','ghc-ana','ghc-alp','ghc-mor','ghc-pin'] },
+  { id:'ghc',       label:'GHC (Help Center)',             icon:'🏗️',  ids:['ghc-par','ghc-san','ghc-tat','ghc-ana','ghc-alp','ghc-mor','ghc-pin'] },
   { id:'fenix',     label:'Fênix',           icon:'🔒',  ids:['fenix-alp','fenix-ana','fenix-esc','fenix-mor','fenix-par','fenix-pin','fenix-san','fenix-tat'] },
   { id:'atlas',     label:'Atlas',           icon:'🛗',  ids:['atlas-tat'] },
   { id:'pk5',       label:'PK5',             icon:'🅿️',  ids:['pk5-mor'] },
@@ -1686,9 +1686,11 @@ async function loadConferencia() {
     NFS_FIXAS.forEach(nf => {
       // Busca lançamento que bata: fornecedor (parcial) + CG + mês
       const match = nfs.find(n => {
-        const fornOk = (n.fornecedor||'').toUpperCase().includes(nf.forn.toUpperCase().slice(0,6)) ||
-                       nf.forn.toUpperCase().includes((n.fornecedor||'').toUpperCase().slice(0,6));
-        const cgOk   = (n.cg||'').replace('CG ','') === nf.cgPortal.replace('CG ','');
+        const nForn  = normStr(n.fornecedor||'');
+        const nfForn = normStr(nf.forn);
+        // Match parcial normalizado (sem acentos): basta os primeiros 5 chars baterem
+        const fornOk = nForn.includes(nfForn.slice(0,5)) || nfForn.includes(nForn.slice(0,5));
+        const cgOk   = normStr(n.cg).replace('cg ','') === normStr(nf.cgPortal).replace('cg ','');
         return fornOk && cgOk;
       });
 
@@ -1784,6 +1786,10 @@ function renderConferencia() {
       </table></div>` : ''}
     </div>`;
   }).join('');
+}
+
+function normStr(s) {
+  return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 }
 
 function confToggle(id) {
