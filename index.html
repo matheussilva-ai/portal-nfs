@@ -272,6 +272,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="nav-item" data-page="lancar" href="#"><span class="nav-icon">➕</span>Lançar NF</a>
     <a class="nav-item" data-page="massa" href="#"><span class="nav-icon">📦</span>Lançamento em massa</a>
     <a class="nav-item" data-page="conferencia" href="#"><span class="nav-icon">✅</span>Conferência Mensal</a>
+    <a class="nav-item" data-page="gastos" href="#"><span class="nav-icon">📊</span>Gastos por Categoria</a>
     <a class="nav-item" data-page="lista" href="#"><span class="nav-icon">📋</span>Notas lançadas</a>
     <div class="nav-lbl">Sistema</div>
     <a class="nav-item" data-page="config" href="#"><span class="nav-icon">⚙️</span>Configurar</a>
@@ -288,6 +289,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="mob-item" data-page="lancar" href="#"><span class="mob-icon">➕</span>Lançar</a>
     <a class="mob-item" data-page="massa" href="#"><span class="mob-icon">📦</span>Massa</a>
     <a class="mob-item" data-page="conferencia" href="#"><span class="mob-icon">✅</span>Conferência</a>
+    <a class="mob-item" data-page="gastos" href="#"><span class="mob-icon">📊</span>Gastos</a>
     <a class="mob-item" data-page="lista" href="#"><span class="mob-icon">📋</span>Notas</a>
     <a class="mob-item" data-page="config" href="#"><span class="mob-icon">⚙️</span>Config</a>
   </div>
@@ -586,6 +588,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div id="conf-grupos"></div>
     </section>
 
+
+    <!-- GASTOS POR CATEGORIA -->
+    <section class="page" id="page-gastos">
+      <div id="gastos-wrap" style="padding-bottom:2rem"></div>
+    </section>
+
 <!-- CONFIG -->
     <section class="page" id="page-config">
       <div class="fb">
@@ -676,6 +684,7 @@ const PM = {
   lancar:   { title:'Lançar NF',       sub:'Adicionar nova nota fiscal' },
   lista:    { title:'Notas lançadas',  sub:'Histórico e filtros' },
   conferencia: { title:'Conferência Mensal', sub:'Verifique se todas as NFs fixas foram recebidas' },
+  gastos:    { title:'Gastos por Categoria', sub:'Orçado vs realizado por categoria e unidade' },
     config:   { title:'Configuração',    sub:'Apps Script e integrações' },
 };
 
@@ -690,6 +699,7 @@ function goTo(p) {
   document.getElementById('pg-sub').textContent   = PM[p].sub;
   if (p==='lista') renderLista();
   if (p==='conferencia') loadConferencia();
+  if (p==='gastos') loadGastos();
   if (p==='dashboard') refreshDash();
 }
 
@@ -1795,6 +1805,189 @@ function normStr(s) {
 function confToggle(id) {
   _confCollapsed.has(id) ? _confCollapsed.delete(id) : _confCollapsed.add(id);
   renderConferencia();
+}
+
+// ─── GASTOS POR CATEGORIA ────────────────────────────────────────────────────
+
+const CATS_DEF = [
+  'Limpeza | Serviços de Terceiros',
+  'Segurança | Serviços de Terceiros',
+  'Ar-condicionado | Manutenção Preventiva',
+  'Manutenção predial | Preventiva',
+  'Serviços Gerais | Manutenção Corretiva',
+  'Materiais/Equipamentos | Manutenção Corretiva',
+  'Elevador| Manutenção Preventiva',
+  'Insumos',
+  'Compras emergenciais',
+  'Aluguel',
+  'Condomínio',
+  'IPTU',
+  'Contas de Consumo [Água, Energia]',
+];
+
+const ALL_CGS_G = ['Morumbi','Pinheiros','Tatuapé','Paraíso','Alphaville','Anália Franco','Santana','Escritório'];
+const CG_COLORS_G = {'Morumbi':'#7C3AED','Pinheiros':'#2563EB','Tatuapé':'#059669','Paraíso':'#D97706','Alphaville':'#DC2626','Anália Franco':'#DB2777','Santana':'#0891B2','Escritório':'#6B7280'};
+
+let _gastosData = null;
+let _gastosMes  = null;
+let _gastosCG   = 'all';
+
+async function loadGastos() {
+  const mes = S.mes;
+  if (_gastosData && _gastosMes === mes) { renderGastos(); return; }
+  document.getElementById('gastos-wrap').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
+  try {
+    const res  = await fetch(`${S.gasUrl}?action=getData&mes=${mes}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+    _gastosData = json;
+    _gastosMes  = mes;
+    _gastosCG   = 'all';
+    renderGastos();
+  } catch(e) {
+    document.getElementById('gastos-wrap').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
+  }
+}
+
+function renderGastos() {
+  if (!_gastosData) return;
+  const nfs    = _gastosData.nfs    || [];
+  const budget = _gastosData.budget || [];
+  const cgList = _gastosCG === 'all' ? ALL_CGS_G : [_gastosCG];
+
+  // Build orçado map: {categoria: {cg: value}}
+  const orcMap = {};
+  budget.forEach(b => {
+    if (!b.categoria || b.isTotal) return;
+    if (!orcMap[b.categoria]) orcMap[b.categoria] = {};
+    orcMap[b.categoria][b.cg] = (orcMap[b.categoria][b.cg] || 0) + (b.budget || 0);
+  });
+
+  // Build realizado map from NFs
+  const realMap = {};
+  nfs.forEach(n => {
+    const cat = n.categoria || '';
+    const cg  = (n.cg || '').replace(/^CG /i,'').trim();
+    if (!realMap[cat]) realMap[cat] = {};
+    realMap[cat][cg] = (realMap[cat][cg] || 0) + (parseFloat(n.valor) || 0);
+  });
+
+  // Merge into rows
+  const allCats = new Set([...CATS_DEF, ...Object.keys(orcMap), ...Object.keys(realMap)]);
+  const rows = [];
+  allCats.forEach(cat => {
+    let orc = 0, real = 0;
+    const cgBreakdown = [];
+    cgList.forEach(cg => {
+      const o = (orcMap[cat]  || {})[cg] || 0;
+      const r = (realMap[cat] || {})[cg] || 0;
+      orc += o; real += r;
+      if (o > 0 || r > 0) cgBreakdown.push({cg, orc: o, real: r});
+    });
+    if (orc === 0 && real === 0) return;
+    rows.push({cat, orc, real, cgBreakdown});
+  });
+
+  // Sort by orc desc
+  rows.sort((a,b) => b.orc - a.orc);
+
+  const totOrc  = rows.reduce((s,r) => s + r.orc,  0);
+  const totReal = rows.reduce((s,r) => s + r.real, 0);
+  const totVar  = totReal - totOrc;
+
+  function fmt(v) { return 'R$ ' + Math.round(Math.abs(v)).toLocaleString('pt-BR'); }
+  function fmtVar(v) { return (v >= 0 ? '+' : '-') + ' ' + fmt(v); }
+  function pct(r,o) { return o > 0 ? Math.min(Math.round(r/o*100), 999) : (r > 0 ? 100 : 0); }
+
+  // Pills HTML
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mesPills = meses.map((m,i) => {
+    const ym = `${_gastosMes.split('-')[0]}-${String(i+1).padStart(2,'0')}`;
+    const isActive = ym === _gastosMes;
+    return `<button onclick="switchGastosMes('${ym}')" style="padding:4px 12px;border-radius:999px;font-size:12px;font-weight:500;border:0.5px solid ${isActive?'var(--fill-accent)':'var(--border-strong)'};cursor:pointer;background:${isActive?'var(--fill-accent)':'var(--surface-1)'};color:${isActive?'var(--on-accent)':'var(--text-secondary)'};transition:all .15s">${m}</button>`;
+  }).join('');
+
+  const cgOpts = ['all',...ALL_CGS_G].map(c =>
+    `<option value="${c}" ${c===_gastosCG?'selected':''}>${c==='all'?'Todas as CGs':'CG '+c}</option>`
+  ).join('');
+
+  const catRows = rows.map(r => {
+    const p      = pct(r.real, r.orc);
+    const isOver = r.real > r.orc * 1.05;
+    const isOk   = p >= 95 && !isOver;
+    const varVal = r.real - r.orc;
+    const barCls = isOver ? '#E24B4A' : p >= 85 ? '#1D9E75' : '#EF9F27';
+
+    const dots = _gastosCG === 'all' ? r.cgBreakdown.map(({cg,orc:o,real:re}) => {
+      const dp   = pct(re, o);
+      const dc   = re > o*1.05 ? '#E24B4A' : dp >= 85 ? '#1D9E75' : '#EF9F27';
+      const clr  = CG_COLORS_G[cg] || '#888';
+      return `<div title="${cg}: ${fmt(re)} / ${fmt(o)}" style="width:8px;height:8px;border-radius:50%;background:${dc};cursor:default;position:relative;flex-shrink:0"></div>`;
+    }).join('') : '';
+
+    return `<div style="background:var(--surface-1);border-radius:12px;border:0.5px solid var(--border);padding:14px 16px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:13px;font-weight:500;color:var(--text-primary)">${r.cat}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:500;background:var(--surface-2);color:var(--text-secondary);border:0.5px solid var(--border)">${p}%</span>
+          ${isOver ? '<span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:500;background:var(--bg-danger);color:var(--text-danger)">acima do orçado</span>' : isOk ? '<span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:500;background:var(--bg-success);color:var(--text-success)">dentro do orçado</span>' : ''}
+        </div>
+      </div>
+      <div style="height:8px;border-radius:999px;background:var(--surface-0);overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;border-radius:999px;background:${barCls};width:${Math.min(p,100)}%;transition:width .4s"></div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+        <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Orçado</div><div style="font-size:13px;font-weight:500;color:var(--text-secondary)">${fmt(r.orc)}</div></div>
+        <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Realizado</div><div style="font-size:13px;font-weight:500;color:var(--text-primary)">${fmt(r.real)}</div></div>
+        <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Variação</div><div style="font-size:13px;font-weight:500;color:${varVal>0?'var(--text-danger)':varVal<0?'var(--text-success)':'var(--text-secondary)'}">${fmtVar(varVal)}</div></div>
+        ${_gastosCG==='all' && dots ? `<div style="margin-left:auto"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">por unidade</div><div style="display:flex;gap:4px;flex-wrap:wrap">${dots}</div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('gastos-wrap').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+      <span style="font-size:12px;color:var(--text-secondary);font-weight:500;margin-right:4px">Mês</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${mesPills}</div>
+      <span style="font-size:12px;color:var(--text-secondary);font-weight:500;margin-left:8px;margin-right:4px">CG</span>
+      <select onchange="switchGastosCG(this.value)" style="font-size:12px;padding:4px 8px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface-2);color:var(--text-primary);cursor:pointer;outline:none">${cgOpts}</select>
+      <button class="btn btn-g btn-sm" style="margin-left:auto" onclick="_gastosData=null;loadGastos()">🔄 Atualizar</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.5rem">
+      <div style="background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">Total orçado</div>
+        <div style="font-size:18px;font-weight:500;color:var(--text-primary)">${fmt(totOrc)}</div>
+      </div>
+      <div style="background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">Total realizado</div>
+        <div style="font-size:18px;font-weight:500;color:var(--text-primary)">${fmt(totReal)}</div>
+      </div>
+      <div style="background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">Variação</div>
+        <div style="font-size:18px;font-weight:500;color:${totVar>0?'var(--text-danger)':totVar<0?'var(--text-success)':'var(--text-secondary)'}">${fmtVar(totVar)}</div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.5rem">por categoria</div>
+    ${catRows}
+  `;
+}
+
+async function switchGastosMes(ym) {
+  // Change month and reload data
+  S.mes = ym;
+  setMlabel(ym);
+  _gastosData = null;
+  _gastosMes  = null;
+  await loadGastos();
+}
+
+function switchGastosCG(cg) {
+  _gastosCG = cg;
+  renderGastos();
 }
 
 </script>
