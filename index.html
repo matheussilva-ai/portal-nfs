@@ -1910,10 +1910,10 @@ function renderGastos() {
     const isActive = ym === _gastosMes;
     return `<button onclick="switchGastosMes('${ym}')"
       style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;
-      border:2px solid ${isActive?'var(--fill-accent)':'var(--border)'};
+      border:2px solid ${isActive?'#5B3FA6':'var(--border)'};
       cursor:pointer;
-      background:${isActive?'var(--fill-accent)':'transparent'};
-      color:${isActive?'white':'var(--text-secondary)'};
+      background:${isActive?'#5B3FA6':'transparent'};
+      color:${isActive?'#FFFFFF':'var(--text-secondary)'};
       transition:all .15s">${m}</button>`;
   }).join('');
 
@@ -1923,10 +1923,10 @@ function renderGastos() {
     const label = c === 'all' ? 'Todas' : c.replace('CG ','');
     return `<button onclick="switchGastosCG('${c}')"
       style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;
-      border:2px solid ${isActive?'var(--fill-accent)':'var(--border)'};
+      border:2px solid ${isActive?'#5B3FA6':'var(--border)'};
       cursor:pointer;
-      background:${isActive?'var(--fill-accent)':'transparent'};
-      color:${isActive?'white':'var(--text-secondary)'};
+      background:${isActive?'#5B3FA6':'transparent'};
+      color:${isActive?'#FFFFFF':'var(--text-secondary)'};
       transition:all .15s">${label}</button>`;
   }).join('');
 
