@@ -1948,12 +1948,30 @@ function renderGastos() {
   }).join('');
 
   document.getElementById('gastos-wrap').innerHTML = `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
-      <span style="font-size:12px;color:var(--text-secondary);font-weight:500;margin-right:4px">Mês</span>
-      <div style="display:flex;gap:4px;flex-wrap:wrap">${mesPills}</div>
-      <span style="font-size:12px;color:var(--text-secondary);font-weight:500;margin-left:8px;margin-right:4px">CG</span>
-      <select onchange="switchGastosCG(this.value)" style="font-size:12px;padding:4px 8px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface-2);color:var(--text-primary);cursor:pointer;outline:none">${cgOpts}</select>
-      <button class="btn btn-g btn-sm" style="margin-left:auto" onclick="_gastosData=null;loadGastos()">🔄 Atualizar</button>
+    <div style="background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px">Filtros</span>
+        </div>
+        <button class="btn btn-g btn-sm" onclick="_gastosData=null;loadGastos()">🔄 Atualizar</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;min-width:28px">MÊS</span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">${mesPills}</div>
+        </div>
+        <div style="height:0.5px;background:var(--border)"></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;min-width:28px">CG</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="gastos-cg-pills">
+            ${['all',...ALL_CGS_G].map(c => {
+              const isActive = c === _gastosCG;
+              const label = c === 'all' ? 'Todas' : c.replace('CG ','').replace('CG','');
+              return `<button onclick="switchGastosCG('${c}')" style="padding:4px 12px;border-radius:999px;font-size:12px;font-weight:500;border:0.5px solid ${isActive?'var(--fill-accent)':'var(--border-strong)'};cursor:pointer;background:${isActive?'var(--fill-accent)':'var(--surface-2)'};color:${isActive?'var(--on-accent)':'var(--text-secondary)'};transition:all .15s">${label}</button>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.5rem">
