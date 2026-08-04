@@ -1623,37 +1623,37 @@ function aplicarMesDetectado(mes) {
 // ─── CONFERÊNCIA MENSAL ──────────────────────────────────────────────────────
 const NFS_FIXAS = [
   // MAIS AR
-  { id:'mair-alp', forn:'MAIS AR',         cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Ar-condicionado | Manutenção Preventiva', valor:1837.00 },
-  { id:'mair-mor', forn:'MAIS AR',         cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Ar-condicionado | Manutenção Preventiva', valor:3395.25 },
-  { id:'mair-tat', forn:'MAIS AR',         cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Ar-condicionado | Manutenção Preventiva', valor:1837.00 },
-  { id:'mair-esc', forn:'MAIS AR',         cgPortal:'Escritório',        cgPlan:'Escritório',        cat:'Ar-condicionado | Manutenção Preventiva', valor:2101.00 },
-  { id:'mair-par', forn:'MAIS AR',         cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Ar-condicionado | Manutenção Preventiva', valor:2985.30 },
-  { id:'mair-san', forn:'MAIS AR',         cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Ar-condicionado | Manutenção Preventiva', valor:2370.00 },
-  { id:'mair-pin', forn:'MAIS AR',         cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Ar-condicionado | Manutenção Preventiva', valor:334.00  },
-  { id:'mair-ana', forn:'MAIS AR',         cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Ar-condicionado | Manutenção Preventiva', valor:2254.50 },
+  { id:'mair-alp', forn:'MAIS AR',         cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Ar-condicionado | Manutenção Preventiva', valor:2000.0 },
+  { id:'mair-mor', forn:'MAIS AR',         cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Ar-condicionado | Manutenção Preventiva', valor:3500.0 },
+  { id:'mair-tat', forn:'MAIS AR',         cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Ar-condicionado | Manutenção Preventiva', valor:2000.0 },
+  { id:'mair-esc', forn:'MAIS AR',         cgPortal:'Escritório',        cgPlan:'Escritório',        cat:'Ar-condicionado | Manutenção Preventiva', valor:2101.0 },
+  { id:'mair-par', forn:'MAIS AR',         cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Ar-condicionado | Manutenção Preventiva', valor:3000.0 },
+  { id:'mair-san', forn:'MAIS AR',         cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Ar-condicionado | Manutenção Preventiva', valor:2370.0 },
+  { id:'mair-pin', forn:'MAIS AR',         cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Ar-condicionado | Manutenção Preventiva', valor:500.0  },
+  { id:'mair-ana', forn:'MAIS AR',         cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Ar-condicionado | Manutenção Preventiva', valor:2300.0 },
   // GHC
   { id:'ghc-par',  forn:'HELP CENTER',             cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Manutenção predial | Preventiva', valor:4356.79 },
-  { id:'ghc-san',  forn:'HELP CENTER',             cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Manutenção predial | Preventiva', valor:4351.06 },
-  { id:'ghc-tat',  forn:'HELP CENTER',             cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Manutenção predial | Preventiva', valor:3523.42 },
+  { id:'ghc-san',  forn:'HELP CENTER',             cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Manutenção predial | Preventiva', valor:4500.0 },
+  { id:'ghc-tat',  forn:'HELP CENTER',             cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Manutenção predial | Preventiva', valor:3600.0 },
   { id:'ghc-ana',  forn:'HELP CENTER',             cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Manutenção predial | Preventiva', valor:3523.42 },
-  { id:'ghc-alp',  forn:'HELP CENTER',             cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Manutenção predial | Preventiva', valor:3108.89 },
-  { id:'ghc-mor',  forn:'HELP CENTER',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Manutenção predial | Preventiva', valor:4558.71 },
+  { id:'ghc-alp',  forn:'HELP CENTER',             cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Manutenção predial | Preventiva', valor:3200.0 },
+  { id:'ghc-mor',  forn:'HELP CENTER',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Manutenção predial | Preventiva', valor:4600.0 },
   { id:'ghc-pin',  forn:'HELP CENTER',             cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Manutenção predial | Preventiva', valor:4558.71 },
   // FÊNIX
-  { id:'fenix-alp',forn:'FÊNIX',           cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Segurança | Serviços de Terceiros', valor:1380.00 },
-  { id:'fenix-ana',forn:'FÊNIX',           cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Segurança | Serviços de Terceiros', valor:690.00  },
-  { id:'fenix-esc',forn:'FÊNIX',           cgPortal:'Escritório',        cgPlan:'Escritório',        cat:'Segurança | Serviços de Terceiros', valor:420.00  },
-  { id:'fenix-mor',forn:'FÊNIX',           cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Segurança | Serviços de Terceiros', valor:1770.00 },
-  { id:'fenix-par',forn:'FÊNIX',           cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Segurança | Serviços de Terceiros', valor:670.00  },
-  { id:'fenix-pin',forn:'FÊNIX',           cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Segurança | Serviços de Terceiros', valor:690.00  },
-  { id:'fenix-san',forn:'FÊNIX',           cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Segurança | Serviços de Terceiros', valor:690.00  },
-  { id:'fenix-tat',forn:'FÊNIX',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:840.00  },
+  { id:'fenix-alp',forn:'FÊNIX',           cgPortal:'CG Alphaville',    cgPlan:'CG Alphaville',    cat:'Segurança | Serviços de Terceiros', valor:1400.0 },
+  { id:'fenix-ana',forn:'FÊNIX',           cgPortal:'CG Anália Franco', cgPlan:'CG Anália Franco', cat:'Segurança | Serviços de Terceiros', valor:690.0  },
+  { id:'fenix-esc',forn:'FÊNIX',           cgPortal:'Escritório',        cgPlan:'Escritório',        cat:'Segurança | Serviços de Terceiros', valor:500.0  },
+  { id:'fenix-mor',forn:'FÊNIX',           cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Segurança | Serviços de Terceiros', valor:1800.0 },
+  { id:'fenix-par',forn:'FÊNIX',           cgPortal:'CG Paraíso',       cgPlan:'CG Paraíso',       cat:'Segurança | Serviços de Terceiros', valor:670.0  },
+  { id:'fenix-pin',forn:'FÊNIX',           cgPortal:'CG Pinheiros',     cgPlan:'CG Pinheiros',     cat:'Segurança | Serviços de Terceiros', valor:700.0  },
+  { id:'fenix-san',forn:'FÊNIX',           cgPortal:'CG Santana',       cgPlan:'CG Santana',       cat:'Segurança | Serviços de Terceiros', valor:690.0  },
+  { id:'fenix-tat',forn:'FÊNIX',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:840.0  },
   // ATLAS
-  { id:'atlas-tat',forn:'Atlas Elevadores',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Elevador| Manutenção Preventiva', valor:595.80  },
+  { id:'atlas-tat',forn:'Atlas Elevadores',           cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Elevador| Manutenção Preventiva', valor:570.0  },
   // PK5
-  { id:'pk5-mor',  forn:'P.K.5',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Manutenção predial | Preventiva', valor:240.00  },
+  { id:'pk5-mor',  forn:'P.K.5',             cgPortal:'CG Morumbi',       cgPlan:'CG Morumbi',       cat:'Manutenção predial | Preventiva', valor:240.0  },
   // GRUPO LIBERDADE
-  { id:'lib-tat',  forn:'GRUPO LIBERDADE', cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:7812.59 },
+  { id:'lib-tat',  forn:'LIBERDADE', cgPortal:'CG Tatuapé',       cgPlan:'CG Tatuapé',       cat:'Segurança | Serviços de Terceiros', valor:7812.59 },
 ];
 
 const CONF_GRUPOS = [
