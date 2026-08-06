@@ -1962,12 +1962,12 @@ function renderGastos() {
       </tr>`;
     }).join('') || `<tr><td colspan="5" style="padding:12px;text-align:center;font-size:12px;color:var(--text-muted)">Nenhum lançamento encontrado</td></tr>`;
 
-    return `<div style="background:white;border-radius:14px;border:1.5px solid #E4E1EF;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(91,63,166,0.06)">
-      <div onclick="toggleGatosCat('${rowId}')" style="padding:14px 16px;cursor:pointer;transition:background .15s"
-        onmouseover="this.style.background='#F5F4F8'" onmouseout="this.style.background='white'">
+    return `<div style="background:#F8F7FC;border-radius:14px;border:1.5px solid #D8D3EE;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(91,63,166,0.10)">
+      <div onclick="toggleGatosCat('${rowId}')" style="padding:16px 18px;cursor:pointer;transition:background .15s"
+        onmouseover="this.style.background='#EFEDF8'" onmouseout="this.style.background='#F8F7FC'">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;font-weight:500;color:var(--text-primary)">${r.cat}</span>
+            <span style="font-size:15px;font-weight:800;color:#1A1535;font-family:'Nunito',sans-serif;letter-spacing:-.01em">${r.cat}</span>
             <span style="font-size:11px;color:var(--text-muted)">▾</span>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
@@ -1982,11 +1982,11 @@ function renderGastos() {
         </div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
           <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Orçado</div>
-            <div style="font-size:13px;font-weight:500;color:var(--text-secondary)">${fmt(r.orc)}</div></div>
+            <div style="font-size:14px;font-weight:700;color:#1A1535">${fmt(r.orc)}</div></div>
           <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Realizado</div>
-            <div style="font-size:13px;font-weight:500;color:var(--text-primary)">${fmt(r.real)}</div></div>
+            <div style="font-size:14px;font-weight:700;color:#1A1535">${fmt(r.real)}</div></div>
           <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Variação</div>
-            <div style="font-size:13px;font-weight:500;color:${varVal>0?'#DC2626':varVal<0?'#16A34A':'var(--text-secondary)'}">${fmtV(varVal)}</div></div>
+            <div style="font-size:14px;font-weight:700;color:${varVal>0?'#DC2626':varVal<0?'#16A34A':'#6B6585'}">${fmtV(varVal)}</div></div>
           ${_gastosCG==='all' && dots ? `<div style="margin-left:auto">
             <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">por unidade</div>
             <div style="display:flex;gap:4px;flex-wrap:wrap">${dots}</div></div>` : ''}
