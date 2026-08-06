@@ -1879,7 +1879,9 @@ function renderGastos() {
     nfMap[cat].push(n);
   });
 
+  const CATS_HIDDEN = ['Melhorias | Obras e Benfeitorias', 'Obras e Benfeitorias - Expansão', 'Obras e Benfeitorias'];
   const allCats = new Set([...CATS_DEF, ...Object.keys(orcMap), ...Object.keys(realMap)]);
+  CATS_HIDDEN.forEach(c => allCats.delete(c));
   const rows = [];
   allCats.forEach(cat => {
     let orc = 0, real = 0;
