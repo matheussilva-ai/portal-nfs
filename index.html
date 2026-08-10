@@ -2094,10 +2094,17 @@ async function loadCartao(mes) {
   _cartaoMes = mes || null;
   wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
   try {
-    const payload = mes ? { mes } : {};
-    const res = await callAppsScript('getLancamentosCartao', payload);
-    if (!res.success) throw new Error(res.error || 'Erro desconhecido');
-    renderCartao(res);
+    if (!S.gasUrl) throw new Error('URL do Apps Script não configurada. Vá em Configurar e cole a URL.');
+    const payload = { action: 'getLancamentosCartao' };
+    if (mes) payload.mes = mes;
+    const res = await fetch(S.gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Erro desconhecido');
+    renderCartao(data);
   } catch(err) {
     wrap.innerHTML = '<div style="text-align:center;padding:40px;color:#DC2626;font-size:13px;font-weight:600">Erro ao carregar: ' + err.message + '</div>';
   }
