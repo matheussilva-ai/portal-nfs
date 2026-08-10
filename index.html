@@ -1879,7 +1879,13 @@ function renderGastos() {
     nfMap[cat].push(n);
   });
 
-  const CATS_HIDDEN = ['Melhorias | Obras e Benfeitorias', 'Obras e Benfeitorias - Expansão', 'Obras e Benfeitorias'];
+  const CATS_HIDDEN = [
+    'Melhorias | Obras e Benfeitorias',
+    'Obras e Benfeitorias - Expansão',
+    'Obras e Benfeitorias',
+    'Compras emergenciais',
+    '31104 - Outras Despesas - Facilities',
+  ];
   const allCats = new Set([...CATS_DEF, ...Object.keys(orcMap), ...Object.keys(realMap)]);
   CATS_HIDDEN.forEach(c => allCats.delete(c));
   const rows = [];
