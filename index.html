@@ -686,6 +686,7 @@ const PM = {
   conferencia: { title:'Conferência Mensal', sub:'Verifique se todas as NFs fixas foram recebidas' },
   gastos:    { title:'Gastos por Categoria', sub:'Orçado vs realizado por categoria e unidade' },
     config:   { title:'Configuração',    sub:'Apps Script e integrações' },
+    cartao:   { title:'Cartão Corporativo', sub:'Lançamentos via cartão Facilities (0852)' },
 };
 
 document.querySelectorAll('.nav-item,.mob-item').forEach(el =>
@@ -701,6 +702,7 @@ function goTo(p) {
   if (p==='conferencia') loadConferencia();
   if (p==='gastos') loadGastos();
   if (p==='dashboard') refreshDash();
+  if (p==='cartao') loadCartao();
 }
 
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -2075,6 +2077,114 @@ async function switchGastosMes(ym) {
 function switchGastosCG(cg) {
   _gastosCG = cg;
   renderGastos();
+}
+
+
+// ── CARTÃO CORPORATIVO ────────────────────────────────────────
+let _cartaoMes = null;
+
+async function loadCartao(mes) {
+  const wrap = document.getElementById('cartao-wrap');
+  if (!wrap) return;
+  _cartaoMes = mes || null;
+  wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
+  try {
+    const payload = mes ? { mes } : {};
+    const res = await callAppsScript('getLancamentosCartao', payload);
+    if (!res.success) throw new Error(res.error || 'Erro desconhecido');
+    renderCartao(res);
+  } catch(err) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:#DC2626;font-size:13px;font-weight:600">Erro ao carregar: ' + err.message + '</div>';
+  }
+}
+
+function renderCartao(data) {
+  const wrap = document.getElementById('cartao-wrap');
+  const fmt  = v => 'R$ ' + Math.abs(parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  const mesPills = [''].concat(data.mesesDisponiveis || []).map(m => {
+    const isActive = (_cartaoMes||'') === m;
+    const label = m || 'Todos';
+    return `<button onclick="loadCartao(${m ? "'"+m+"'" : ''})"
+      style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;border:2px solid ${isActive?'#5B3FA6':'var(--border)'};cursor:pointer;background:${isActive?'#5B3FA6':'transparent'};color:${isActive?'#fff':'var(--text-secondary)'};transition:all .15s;font-family:var(--font)">${label}</button>`;
+  }).join('');
+
+  const rows = data.rows || [];
+  const tableRows = rows.length === 0
+    ? `<tr><td colspan="6" style="text-align:center;padding:24px;font-size:13px;color:var(--text-muted)">Nenhum lançamento encontrado</td></tr>`
+    : rows.map(r => `
+      <tr style="border-bottom:0.5px solid var(--border);transition:background .12s"
+        onmouseover="this.style.background='var(--purple-muted)'" onmouseout="this.style.background=''">
+        <td style="padding:10px 16px;font-size:12px;color:var(--text-muted);white-space:nowrap">${r.data||'—'}</td>
+        <td style="padding:10px 16px;font-size:13px;color:var(--text)">${r.fornecedor||'—'}</td>
+        <td style="padding:10px 16px;font-size:13px;font-weight:700;color:#5B3FA6">${r.cg||'—'}</td>
+        <td style="padding:10px 16px;font-size:12px;color:var(--text-muted)">${r.descricao||'—'}</td>
+        <td style="padding:10px 16px;font-size:12px;color:var(--text-muted)">${r.nf||'—'}</td>
+        <td style="padding:10px 16px;font-size:13px;font-weight:700;color:var(--text);text-align:right;white-space:nowrap">${fmt(r.valor)}</td>
+        <td style="padding:10px 16px;text-align:center">${r.url ? `<a href="${r.url}" target="_blank" title="Abrir NF no Drive" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:#EDE8FA;color:#5B3FA6;text-decoration:none;font-size:14px;transition:background .15s" onmouseover="this.style.background='#D8D0F5'" onmouseout="this.style.background='#EDE8FA'">↗</a>` : '<span style="color:#D0CCEA;font-size:12px">—</span>'}</td>
+      </tr>`).join('');
+
+  // Cards de total por mês (só quando "Todos")
+  let totaisMeses = '';
+  if (!_cartaoMes && data.totaisPorMes && Object.keys(data.totaisPorMes).length > 1) {
+    totaisMeses = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px">
+      ${Object.entries(data.totaisPorMes).map(([mes, val]) => `
+        <div style="background:white;border:1.5px solid #E4E1EF;border-radius:12px;padding:12px 14px;cursor:pointer;transition:box-shadow .15s"
+          onclick="loadCartao('${mes}')"
+          onmouseover="this.style.boxShadow='0 4px 12px rgba(91,63,166,0.15)'" onmouseout="this.style.boxShadow=''">
+          <div style="font-size:10px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">${mes}</div>
+          <div style="font-size:16px;font-weight:800;color:#1A1535">${fmt(val)}</div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  wrap.innerHTML = `
+    <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px">Filtro por mês</span>
+        <button class="btn btn-g btn-sm" onclick="loadCartao(_cartaoMes||undefined)">🔄 Atualizar</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${mesPills}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem">
+      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
+        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Total gasto</div>
+        <div style="font-size:22px;font-weight:800;color:#1A1535">${fmt(data.total||0)}</div>
+      </div>
+      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
+        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Lançamentos</div>
+        <div style="font-size:22px;font-weight:800;color:#5B3FA6">${data.count||0} notas</div>
+      </div>
+      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
+        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Período</div>
+        <div style="font-size:16px;font-weight:800;color:#1A1535">${_cartaoMes || 'Todo o ano'}</div>
+      </div>
+    </div>
+
+    ${totaisMeses}
+
+    <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
+      <div style="padding:12px 16px;background:#F8F7FC;border-bottom:1px solid #E4E1EF">
+        <span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px">${rows.length} lançamento${rows.length!==1?'s':''} · Cartão Facilities (0852)</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:600px">
+          <thead>
+            <tr style="background:#F0EEF7">
+              <th style="padding:8px 16px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Data</th>
+              <th style="padding:8px 16px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th>
+              <th style="padding:8px 16px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th>
+              <th style="padding:8px 16px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Descrição</th>
+              <th style="padding:8px 16px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th>
+              <th style="padding:8px 16px;font-size:11px;font-weight:700;color:#9B97C4;text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th>
+              <th style="padding:8px 16px;font-size:11px;font-weight:700;color:#9B97C4;text-align:center;text-transform:uppercase;letter-spacing:.5px">NF</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 </script>
