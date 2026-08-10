@@ -1944,78 +1944,71 @@ function renderGastos() {
     const isOver = r.real > r.orc * 1.05;
     const isOk   = p >= 95 && !isOver;
     const varVal = r.real - r.orc;
-    const barClr = isOver ? '#E24B4A' : p >= 85 ? '#1D9E75' : '#EF9F27';
+    const barClr = isOver ? '#DC2626' : p >= 85 ? '#16A34A' : '#D97706';
     const rowId  = 'gcat-' + ri;
 
-    const dots = _gastosCG === 'all' ? r.cgBreakdown.map(({cg,orc:o,real:re}) => {
-      const dp = pct(re,o);
-      const dc = re>o*1.05?'#E24B4A':dp>=85?'#1D9E75':'#EF9F27';
-      return `<div title="${cg}: ${fmt(re)} / ${fmt(o)}"
-        style="width:9px;height:9px;border-radius:50%;background:${dc};cursor:default;flex-shrink:0"></div>`;
-    }).join('') : '';
+    // Chip de status
+    const statusChip = isOver
+      ? `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;background:#FEE2E2;color:#DC2626">${p}% · acima do orçado</span>`
+      : isOk
+      ? `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;background:#DCFCE7;color:#16A34A">${p}% · dentro do orçado</span>`
+      : `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;background:#FEF3C7;color:#D97706">${p}% · baixo uso</span>`;
 
     // NF list (expanded)
+    const totalReal = r.nfs.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
     const nfRows = r.nfs.map(n => {
-      const v   = parseFloat(n.valor)||0;
-      const cg  = (n.cg||'').replace(/^CG /i,'');
-      const orcCg = _gastosCG==='all'
-        ? (r.cgBreakdown.find(d=>d.cg===cg)||{orc:0}).orc / Math.max(r.nfs.filter(x=>(x.cg||'').replace(/^CG /i,'')=== cg).length,1)
-        : r.orc / Math.max(r.nfs.length,1);
-      return `<tr style="border-bottom:0.5px solid var(--border)">
-        <td style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text-primary)">${n.fornecedor||'—'}</td>
-        <td style="padding:8px 12px;font-size:12px;color:var(--text-secondary)">${cg}</td>
-        <td style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text-primary);text-align:right">${fmt(v)}</td>
-        <td style="padding:8px 12px;font-size:12px;color:var(--text-muted)">${n.nf||'—'}</td>
-        <td style="padding:8px 12px;font-size:12px;color:var(--text-muted)">${n.vencimento||n.dataLancamento||'—'}</td>
+      const v  = parseFloat(n.valor)||0;
+      const cg = (n.cg||'').replace(/^CG /i,'');
+      return `<tr style="border-bottom:0.5px solid #EDE9F5;transition:background .12s"
+        onmouseover="this.style.background='#F5F3FC'" onmouseout="this.style.background=''">
+        <td style="padding:10px 18px;font-size:13px;color:#1A1535;max-width:340px">${n.fornecedor||'—'}</td>
+        <td style="padding:10px 18px;font-size:13px;font-weight:600;color:#5B3FA6">${cg}</td>
+        <td style="padding:10px 18px;font-size:12px;color:#9B97C4">${n.nf||'—'}</td>
+        <td style="padding:10px 18px;font-size:12px;color:#9B97C4">${n.vencimento||n.dataLancamento||'—'}</td>
+        <td style="padding:10px 18px;font-size:13px;font-weight:600;color:#1A1535;text-align:right">${fmt(v)}</td>
       </tr>`;
-    }).join('') || `<tr><td colspan="5" style="padding:12px;text-align:center;font-size:12px;color:var(--text-muted)">Nenhum lançamento encontrado</td></tr>`;
+    }).join('') || `<tr><td colspan="5" style="padding:16px;text-align:center;font-size:12px;color:#9B97C4">Nenhum lançamento encontrado</td></tr>`;
 
-    return `<div style="background:#F8F7FC;border-radius:14px;border:1.5px solid #D8D3EE;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(91,63,166,0.10)">
-      <div onclick="toggleGatosCat('${rowId}')" style="padding:16px 18px;cursor:pointer;transition:background .15s"
-        onmouseover="this.style.background='#EFEDF8'" onmouseout="this.style.background='#F8F7FC'">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:15px;font-weight:800;color:#1A1535;font-family:'Nunito',sans-serif;letter-spacing:-.01em">${r.cat}</span>
-            <span style="font-size:11px;color:var(--text-muted)">▾</span>
+    const totalRow = r.nfs.length > 0 ? `<tr style="background:#F0EEF7;border-top:1px solid #D8D3EE">
+      <td colspan="4" style="padding:10px 18px;font-size:12px;font-weight:600;color:#6B6585;text-align:right">Total realizado</td>
+      <td style="padding:10px 18px;font-size:14px;font-weight:700;color:#1A1535;text-align:right">${fmt(totalReal)}</td>
+    </tr>` : '';
+
+    return `<div style="background:#FFFFFF;border-radius:12px;border:0.5px solid #DDD9F0;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
+      <div onclick="toggleGatosCat('${rowId}')" style="display:flex;cursor:pointer;transition:background .15s"
+        onmouseover="this.style.background='#F8F7FC'" onmouseout="this.style.background=''">
+        <div style="width:4px;flex-shrink:0;background:${barClr};border-radius:0"></div>
+        <div style="flex:1;padding:14px 18px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:15px;font-weight:700;color:#1A1535;font-family:'Nunito',sans-serif">${r.cat}</span>
+            ${statusChip}
           </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;
-              background:var(--surface-2);color:var(--text-secondary);border:0.5px solid var(--border)">${p}%</span>
-            ${isOver ? '<span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#FEE2E2;color:#DC2626">acima do orçado</span>'
-                     : isOk ? '<span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#DCFCE7;color:#16A34A">dentro do orçado</span>' : ''}
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+            <span style="font-size:22px;font-weight:700;color:#1A1535;font-family:'Nunito',sans-serif">${fmt(r.real)}</span>
+            <span style="font-size:12px;color:#6B6585">realizado de <span style="font-weight:600;color:#1A1535">${fmt(r.orc)}</span> orçados</span>
+            <span style="margin-left:auto;font-size:13px;font-weight:600;color:${varVal>0?'#DC2626':varVal<0?'#16A34A':'#6B6585'}">${fmtV(varVal)}</span>
           </div>
-        </div>
-        <div style="height:8px;border-radius:999px;background:#EEEDF5;overflow:hidden;margin-bottom:10px">
-          <div style="height:100%;border-radius:999px;background:${barClr};width:${Math.min(p,100)}%;transition:width .4s"></div>
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
-          <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Orçado</div>
-            <div style="font-size:14px;font-weight:700;color:#1A1535">${fmt(r.orc)}</div></div>
-          <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Realizado</div>
-            <div style="font-size:14px;font-weight:700;color:#1A1535">${fmt(r.real)}</div></div>
-          <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Variação</div>
-            <div style="font-size:14px;font-weight:700;color:${varVal>0?'#DC2626':varVal<0?'#16A34A':'#6B6585'}">${fmtV(varVal)}</div></div>
-          ${_gastosCG==='all' && dots ? `<div style="margin-left:auto">
-            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">por unidade</div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap">${dots}</div></div>` : ''}
+          <div style="height:4px;border-radius:2px;background:#EEEDF5;overflow:hidden">
+            <div style="height:100%;border-radius:2px;background:${barClr};opacity:.7;width:${Math.min(p,100)}%;transition:width .4s"></div>
+          </div>
         </div>
       </div>
-      <div id="${rowId}" style="display:none;border-top:0.5px solid var(--border)">
-        <div style="padding:8px 12px 4px;background:#F5F4F8">
-          <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">${r.nfs.length} nota${r.nfs.length!==1?'s':''} lançada${r.nfs.length!==1?'s':''}</span>
+      <div id="${rowId}" style="display:none;border-top:0.5px solid #DDD9F0">
+        <div style="padding:10px 18px;background:#F8F7FC;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:700;color:#9B97C4;text-transform:uppercase;letter-spacing:.5px">${r.nfs.length} nota${r.nfs.length!==1?'s':''} lançada${r.nfs.length!==1?'s':''}</span>
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;min-width:500px">
             <thead>
-              <tr style="background:var(--surface-2)">
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Vencimento</th>
+              <tr style="background:#F0EEF7">
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Vencimento</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th>
               </tr>
             </thead>
-            <tbody>${nfRows}</tbody>
+            <tbody>${nfRows}${totalRow}</tbody>
           </table>
         </div>
       </div>
