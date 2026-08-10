@@ -669,9 +669,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="load-ov" id="load-ov"><div class="spin-w"><div class="spin"></div><div class="spin-lbl">Aguarde…</div></div></div>
 
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbyIIpyrQZMeUYVw78O0Xbp5vWZuPBDZTudveLc_CiRw9BSODsJeisZ63z-B-Yf533xB/exec';
+const GAS = 'https://script.google.com/macros/s/AKfycbzg8zdU0XHLyvBK8nK_e-Ykg3ydnvjsKMfWbQ_DPtpdQmLX8298SAd06_Tkok8-H6o/exec';
 const S = {
-  gasUrl: localStorage.getItem('gasUrl') || GAS,
+  gasUrl: GAS, // URL fixa
   mes:    new Date().toISOString().slice(0,7),
   tipo:   'recorrente',
   files:  [],
