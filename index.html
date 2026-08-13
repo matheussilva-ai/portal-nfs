@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal NFs · Facilities · Genial Care</title>
+<title>Controle Financeiro · Facilities · Genial Care</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -264,7 +264,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <nav class="sidebar">
   <div class="sb-logo">
     <div class="sb-eyebrow">Facilities · Genial Care</div>
-    <div class="sb-title">Portal<br>de <span>NFs</span></div>
+    <div class="sb-title">Controle<br><span>Financeiro</span></div>
   </div>
   <div class="sb-nav">
     <div class="nav-lbl">Menu</div>
@@ -273,7 +273,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="nav-item" data-page="massa" href="#"><span class="nav-icon">📦</span>Lançamento em massa</a>
     <a class="nav-item" data-page="conferencia" href="#"><span class="nav-icon">✅</span>Conferência Mensal</a>
     <a class="nav-item" data-page="gastos" href="#"><span class="nav-icon">📊</span>Gastos por Categoria</a>
-    <a class="nav-item" data-page="cartao" href="#"><span class="nav-icon">💳</span>Cartão Corporativo</a>
     <a class="nav-item" data-page="cartao" href="#"><span class="nav-icon">💳</span>Cartão Corporativo</a>
     <a class="nav-item" data-page="lista" href="#"><span class="nav-icon">📋</span>Notas lançadas</a>
     <div class="nav-lbl">Sistema</div>
@@ -292,7 +291,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="mob-item" data-page="massa" href="#"><span class="mob-icon">📦</span>Massa</a>
     <a class="mob-item" data-page="conferencia" href="#"><span class="mob-icon">✅</span>Conferência</a>
     <a class="mob-item" data-page="gastos" href="#"><span class="mob-icon">📊</span>Gastos</a>
-    <a class="mob-item" data-page="cartao" href="#"><span class="mob-icon">💳</span>Cartão</a>
     <a class="mob-item" data-page="cartao" href="#"><span class="mob-icon">💳</span>Cartão</a>
     <a class="mob-item" data-page="lista" href="#"><span class="mob-icon">📋</span>Notas</a>
     <a class="mob-item" data-page="config" href="#"><span class="mob-icon">⚙️</span>Config</a>
@@ -604,12 +602,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div id="cartao-wrap" style="padding-bottom:2rem"></div>
     </section>
 
-
-    <!-- CARTÃO CORPORATIVO -->
-    <section class="page" id="page-cartao">
-      <div id="cartao-wrap" style="padding-bottom:2rem"></div>
-    </section>
-
 <!-- CONFIG -->
     <section class="page" id="page-config">
       <div class="fb">
@@ -685,9 +677,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="load-ov" id="load-ov"><div class="spin-w"><div class="spin"></div><div class="spin-lbl">Aguarde…</div></div></div>
 
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbyIIpyrQZMeUYVw78O0Xbp5vWZuPBDZTudveLc_CiRw9BSODsJeisZ63z-B-Yf533xB/exec';
+const GAS = 'https://script.google.com/macros/s/AKfycbzg8zdU0XHLyvBK8nK_e-Ykg3ydnvjsKMfWbQ_DPtpdQmLX8298SAd06_Tkok8-H6o/exec';
 const S = {
-  gasUrl: localStorage.getItem('gasUrl') || GAS,
+  gasUrl: GAS, // URL fixa
   mes:    new Date().toISOString().slice(0,7),
   tipo:   'recorrente',
   files:  [],
@@ -702,7 +694,6 @@ const PM = {
   conferencia: { title:'Conferência Mensal', sub:'Verifique se todas as NFs fixas foram recebidas' },
   gastos:    { title:'Gastos por Categoria', sub:'Orçado vs realizado por categoria e unidade' },
   cartao:    { title:'Cartão Corporativo', sub:'Gastos no cartão por mês, CG e categoria' },
-  cartao:    { title:'Cartão Corporativo', sub:'Gastos realizados com cartão corporativo' },
     config:   { title:'Configuração',    sub:'Apps Script e integrações' },
 };
 
@@ -718,7 +709,6 @@ function goTo(p) {
   if (p==='lista') renderLista();
   if (p==='conferencia') loadConferencia();
   if (p==='gastos') loadGastos();
-  if (p==='cartao') loadCartao();
   if (p==='cartao') loadCartao();
   if (p==='dashboard') refreshDash();
 }
@@ -1899,7 +1889,15 @@ function renderGastos() {
     nfMap[cat].push(n);
   });
 
+  const CATS_HIDDEN = [
+    'Melhorias | Obras e Benfeitorias',
+    'Obras e Benfeitorias - Expansão',
+    'Obras e Benfeitorias',
+    'Compras emergenciais',
+    '31104 - Outras Despesas - Facilities',
+  ];
   const allCats = new Set([...CATS_DEF, ...Object.keys(orcMap), ...Object.keys(realMap)]);
+  CATS_HIDDEN.forEach(c => allCats.delete(c));
   const rows = [];
   allCats.forEach(cat => {
     let orc = 0, real = 0;
@@ -1956,78 +1954,71 @@ function renderGastos() {
     const isOver = r.real > r.orc * 1.05;
     const isOk   = p >= 95 && !isOver;
     const varVal = r.real - r.orc;
-    const barClr = isOver ? '#E24B4A' : p >= 85 ? '#1D9E75' : '#EF9F27';
+    const barClr = isOver ? '#DC2626' : p >= 85 ? '#16A34A' : '#D97706';
     const rowId  = 'gcat-' + ri;
 
-    const dots = _gastosCG === 'all' ? r.cgBreakdown.map(({cg,orc:o,real:re}) => {
-      const dp = pct(re,o);
-      const dc = re>o*1.05?'#E24B4A':dp>=85?'#1D9E75':'#EF9F27';
-      return `<div title="${cg}: ${fmt(re)} / ${fmt(o)}"
-        style="width:9px;height:9px;border-radius:50%;background:${dc};cursor:default;flex-shrink:0"></div>`;
-    }).join('') : '';
+    // Chip de status
+    const statusChip = isOver
+      ? `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;background:#FEE2E2;color:#DC2626">${p}% · acima do orçado</span>`
+      : isOk
+      ? `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;background:#DCFCE7;color:#16A34A">${p}% · dentro do orçado</span>`
+      : `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;background:#FEF3C7;color:#D97706">${p}% · baixo uso</span>`;
 
     // NF list (expanded)
+    const totalReal = r.nfs.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
     const nfRows = r.nfs.map(n => {
-      const v   = parseFloat(n.valor)||0;
-      const cg  = (n.cg||'').replace(/^CG /i,'');
-      const orcCg = _gastosCG==='all'
-        ? (r.cgBreakdown.find(d=>d.cg===cg)||{orc:0}).orc / Math.max(r.nfs.filter(x=>(x.cg||'').replace(/^CG /i,'')=== cg).length,1)
-        : r.orc / Math.max(r.nfs.length,1);
-      return `<tr style="border-bottom:0.5px solid var(--border)">
-        <td style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text-primary)">${n.fornecedor||'—'}</td>
-        <td style="padding:8px 12px;font-size:12px;color:var(--text-secondary)">${cg}</td>
-        <td style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text-primary);text-align:right">${fmt(v)}</td>
-        <td style="padding:8px 12px;font-size:12px;color:var(--text-muted)">${n.nf||'—'}</td>
-        <td style="padding:8px 12px;font-size:12px;color:var(--text-muted)">${n.vencimento||n.dataLancamento||'—'}</td>
+      const v  = parseFloat(n.valor)||0;
+      const cg = (n.cg||'').replace(/^CG /i,'');
+      return `<tr style="border-bottom:0.5px solid #EDE9F5;transition:background .12s"
+        onmouseover="this.style.background='#F5F3FC'" onmouseout="this.style.background=''">
+        <td style="padding:10px 18px;font-size:13px;color:#1A1535;max-width:340px">${n.fornecedor||'—'}</td>
+        <td style="padding:10px 18px;font-size:13px;font-weight:600;color:#5B3FA6">${cg}</td>
+        <td style="padding:10px 18px;font-size:12px;color:#9B97C4">${n.nf||'—'}</td>
+        <td style="padding:10px 18px;font-size:12px;color:#9B97C4">${n.vencimento||n.dataLancamento||'—'}</td>
+        <td style="padding:10px 18px;font-size:13px;font-weight:600;color:#1A1535;text-align:right">${fmt(v)}</td>
       </tr>`;
-    }).join('') || `<tr><td colspan="5" style="padding:12px;text-align:center;font-size:12px;color:var(--text-muted)">Nenhum lançamento encontrado</td></tr>`;
+    }).join('') || `<tr><td colspan="5" style="padding:16px;text-align:center;font-size:12px;color:#9B97C4">Nenhum lançamento encontrado</td></tr>`;
 
-    return `<div style="background:white;border-radius:14px;border:1.5px solid #E4E1EF;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(91,63,166,0.06)">
-      <div onclick="toggleGatosCat('${rowId}')" style="padding:14px 16px;cursor:pointer;transition:background .15s"
-        onmouseover="this.style.background='#F5F4F8'" onmouseout="this.style.background='white'">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;font-weight:500;color:var(--text-primary)">${r.cat}</span>
-            <span style="font-size:11px;color:var(--text-muted)">▾</span>
+    const totalRow = r.nfs.length > 0 ? `<tr style="background:#F0EEF7;border-top:1px solid #D8D3EE">
+      <td colspan="4" style="padding:10px 18px;font-size:12px;font-weight:600;color:#6B6585;text-align:right">Total realizado</td>
+      <td style="padding:10px 18px;font-size:14px;font-weight:700;color:#1A1535;text-align:right">${fmt(totalReal)}</td>
+    </tr>` : '';
+
+    return `<div style="background:#FFFFFF;border-radius:12px;border:0.5px solid #DDD9F0;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
+      <div onclick="toggleGatosCat('${rowId}')" style="display:flex;cursor:pointer;transition:background .15s"
+        onmouseover="this.style.background='#F8F7FC'" onmouseout="this.style.background=''">
+        <div style="width:4px;flex-shrink:0;background:${barClr};border-radius:0"></div>
+        <div style="flex:1;padding:14px 18px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:15px;font-weight:700;color:#1A1535;font-family:'Nunito',sans-serif">${r.cat}</span>
+            ${statusChip}
           </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;
-              background:var(--surface-2);color:var(--text-secondary);border:0.5px solid var(--border)">${p}%</span>
-            ${isOver ? '<span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#FEE2E2;color:#DC2626">acima do orçado</span>'
-                     : isOk ? '<span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#DCFCE7;color:#16A34A">dentro do orçado</span>' : ''}
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+            <span style="font-size:22px;font-weight:700;color:#1A1535;font-family:'Nunito',sans-serif">${fmt(r.real)}</span>
+            <span style="font-size:12px;color:#6B6585">realizado de <span style="font-weight:600;color:#1A1535">${fmt(r.orc)}</span> orçados</span>
+            <span style="margin-left:auto;font-size:13px;font-weight:600;color:${varVal>0?'#DC2626':varVal<0?'#16A34A':'#6B6585'}">${fmtV(varVal)}</span>
           </div>
-        </div>
-        <div style="height:8px;border-radius:999px;background:#EEEDF5;overflow:hidden;margin-bottom:10px">
-          <div style="height:100%;border-radius:999px;background:${barClr};width:${Math.min(p,100)}%;transition:width .4s"></div>
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
-          <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Orçado</div>
-            <div style="font-size:13px;font-weight:500;color:var(--text-secondary)">${fmt(r.orc)}</div></div>
-          <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Realizado</div>
-            <div style="font-size:13px;font-weight:500;color:var(--text-primary)">${fmt(r.real)}</div></div>
-          <div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Variação</div>
-            <div style="font-size:13px;font-weight:500;color:${varVal>0?'#DC2626':varVal<0?'#16A34A':'var(--text-secondary)'}">${fmtV(varVal)}</div></div>
-          ${_gastosCG==='all' && dots ? `<div style="margin-left:auto">
-            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">por unidade</div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap">${dots}</div></div>` : ''}
+          <div style="height:4px;border-radius:2px;background:#EEEDF5;overflow:hidden">
+            <div style="height:100%;border-radius:2px;background:${barClr};opacity:.7;width:${Math.min(p,100)}%;transition:width .4s"></div>
+          </div>
         </div>
       </div>
-      <div id="${rowId}" style="display:none;border-top:0.5px solid var(--border)">
-        <div style="padding:8px 12px 4px;background:#F5F4F8">
-          <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">${r.nfs.length} nota${r.nfs.length!==1?'s':''} lançada${r.nfs.length!==1?'s':''}</span>
+      <div id="${rowId}" style="display:none;border-top:0.5px solid #DDD9F0">
+        <div style="padding:10px 18px;background:#F8F7FC;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:700;color:#9B97C4;text-transform:uppercase;letter-spacing:.5px">${r.nfs.length} nota${r.nfs.length!==1?'s':''} lançada${r.nfs.length!==1?'s':''}</span>
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;min-width:500px">
             <thead>
-              <tr style="background:var(--surface-2)">
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th>
-                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Vencimento</th>
+              <tr style="background:#F0EEF7">
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:left;text-transform:uppercase;letter-spacing:.5px">Vencimento</th>
+                <th style="padding:8px 18px;font-size:11px;font-weight:700;color:#9B97C4;text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th>
               </tr>
             </thead>
-            <tbody>${nfRows}</tbody>
+            <tbody>${nfRows}${totalRow}</tbody>
           </table>
         </div>
       </div>
@@ -2096,197 +2087,12 @@ function switchGastosCG(cg) {
   renderGastos();
 }
 
-// ─── CARTÃO CORPORATIVO ──────────────────────────────────────────────────────
 
-let _cartaoData = null;
-let _cartaoMes  = null;
-let _cartaoCG   = 'all';
 
-async function loadCartao() {
-  const mes = S.mes;
-  if (_cartaoData && _cartaoMes === mes) { renderCartao(); return; }
-  document.getElementById('cartao-wrap').innerHTML =
-    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:#6B6585">⏳ Consultando planilha…</div>';
-  try {
-    const res  = await fetch(`${S.gasUrl}?action=getData&mes=${mes}`);
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error);
-    json.nfs = (json.nfs || []).filter(n =>
-      (n.pagamento || '').toLowerCase().includes('cart') 
-    );
-    _cartaoData = json;
-    _cartaoMes  = mes;
-    _cartaoCG   = 'all';
-    renderCartao();
-  } catch(e) {
-    document.getElementById('cartao-wrap').innerHTML =
-      `<div style="text-align:center;padding:40px;color:#DC2626">❌ ${e.message}</div>`;
-  }
-}
-
-function renderCartao() {
-  if (!_cartaoData) return;
-  const nfs    = _cartaoData.nfs || [];
-  const nfsFilt = nfs.filter(n => {
-    if (_cartaoCG === 'all') return true;
-    return (n.cg || '').replace(/^CG /i,'').trim() === _cartaoCG;
-  });
-
-  const catMap = {};
-  const nfMap  = {};
-  nfsFilt.forEach(n => {
-    const cat = n.categoria || 'Outros';
-    const cg  = (n.cg || '').replace(/^CG /i,'').trim();
-    if (!catMap[cat]) catMap[cat] = {};
-    if (!nfMap[cat])  nfMap[cat]  = [];
-    catMap[cat][cg] = (catMap[cat][cg] || 0) + (parseFloat(n.valor) || 0);
-    nfMap[cat].push(n);
-  });
-
-  const totReal = nfsFilt.reduce((s,n) => s + (parseFloat(n.valor)||0), 0);
-  const totNFs  = nfsFilt.length;
-
-  const rows = Object.keys(catMap).map(cat => {
-    const real = Object.values(catMap[cat]).reduce((s,v) => s+v, 0);
-    const cgBreakdown = Object.entries(catMap[cat]).map(([cg,v]) => ({cg, real:v}));
-    return {cat, real, cgBreakdown, nfs: nfMap[cat] || []};
-  }).sort((a,b) => b.real - a.real);
-
-  function fmt(v)    { return 'R$ ' + Math.round(Math.abs(v)).toLocaleString('pt-BR'); }
-  function fmtD(v)   { return 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  const pctOf = v   => totReal > 0 ? Math.round(v/totReal*100) : 0;
-
-  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const mesPills = meses.map((m,i) => {
-    const ym = (_cartaoMes||'2026-07').split('-')[0] + '-' + String(i+1).padStart(2,'0');
-    const on = ym === _cartaoMes;
-    return `<button onclick="switchCartaoMes('${ym}')" style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;border:2px solid ${on?'#5B3FA6':'#E4E1EF'};cursor:pointer;background:${on?'#5B3FA6':'transparent'};color:${on?'#FFFFFF':'#6B6585'};transition:all .15s">${m}</button>`;
-  }).join('');
-
-  const cgPills = ['all',...ALL_CGS_G].map(c => {
-    const on = c === _cartaoCG;
-    const lb = c === 'all' ? 'Todas' : c.replace('CG ','');
-    return `<button onclick="switchCartaoCG('${c}')" style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;border:2px solid ${on?'#5B3FA6':'#E4E1EF'};cursor:pointer;background:${on?'#5B3FA6':'transparent'};color:${on?'#FFFFFF':'#6B6585'};transition:all .15s">${lb}</button>`;
-  }).join('');
-
-  const catRows = rows.map((r, ri) => {
-    const pct   = pctOf(r.real);
-    const rowId = 'ccat-' + ri;
-    const dots  = _cartaoCG === 'all' ? r.cgBreakdown.map(({cg,real}) =>
-      `<div title="${cg}: ${fmtD(real)}" style="width:9px;height:9px;border-radius:50%;background:${CG_COLORS_G[cg]||'#888'};cursor:default;flex-shrink:0"></div>`
-    ).join('') : '';
-
-    const nfRows = r.nfs
-      .filter(n => _cartaoCG === 'all' || (n.cg||'').replace(/^CG /i,'').trim() === _cartaoCG)
-      .sort((a,b) => (parseFloat(b.valor)||0) - (parseFloat(a.valor)||0))
-      .map(n => {
-        const v  = parseFloat(n.valor)||0;
-        const cg = (n.cg||'').replace(/^CG /i,'');
-        return `<tr style="border-bottom:0.5px solid #E4E1EF">
-          <td style="padding:8px 12px;font-size:12px;font-weight:600;color:#1A1535">${n.fornecedor||'—'}</td>
-          <td style="padding:8px 12px;font-size:12px;color:#6B6585">${cg}</td>
-          <td style="padding:8px 12px;font-size:12px;font-weight:600;color:#1A1535;text-align:right">${fmtD(v)}</td>
-          <td style="padding:8px 12px;font-size:12px;color:#A89FC5;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(n.comentario||'').replace(/"/g,"'")}">${n.comentario||'—'}</td>
-          <td style="padding:8px 12px;font-size:12px;color:#A89FC5">${n.vencimento||n.dataLancamento||'—'}</td>
-        </tr>`;
-      }).join('') || `<tr><td colspan="5" style="padding:12px;text-align:center;font-size:12px;color:#A89FC5">Nenhum lançamento</td></tr>`;
-
-    return `<div style="background:white;border-radius:14px;border:1.5px solid #E4E1EF;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(91,63,166,0.06)">
-      <div onclick="toggleCartaoCat('${rowId}')" style="padding:14px 16px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#F5F4F8'" onmouseout="this.style.background='white'">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;font-weight:600;color:#1A1535">${r.cat}</span>
-            <span style="font-size:11px;color:#A89FC5">▾</span>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:13px;font-weight:700;color:#5B3FA6">${fmtD(r.real)}</span>
-            <span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#EDE8FA;color:#5B3FA6">${pct}% do total</span>
-          </div>
-        </div>
-        <div style="height:6px;border-radius:999px;background:#EEEDF5;overflow:hidden;margin-bottom:8px">
-          <div style="height:100%;border-radius:999px;background:#5B3FA6;width:${pct}%;transition:width .4s"></div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11px;color:#A89FC5">${r.nfs.length} lançamento${r.nfs.length!==1?'s':''} · clique para ver</span>
-          ${_cartaoCG==='all'&&dots?`<div style="display:flex;gap:3px;flex-wrap:wrap">${dots}</div>`:''}
-        </div>
-      </div>
-      <div id="${rowId}" style="display:none;border-top:0.5px solid #E4E1EF">
-        <div style="padding:8px 12px 4px;background:#F5F4F8">
-          <span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.5px">${r.nfs.length} lançamento${r.nfs.length!==1?'s':''}</span>
-        </div>
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;min-width:500px">
-            <thead><tr style="background:#F5F4F8">
-              <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th>
-              <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th>
-              <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#6B6585;text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th>
-              <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Descrição</th>
-              <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Data</th>
-            </tr></thead>
-            <tbody>${nfRows}</tbody>
-          </table>
-        </div>
-      </div>
-    </div>`;
-  }).join('') || '<div style="text-align:center;padding:40px;color:#A89FC5;font-size:13px">Nenhum lançamento de cartão corporativo neste mês</div>';
-
-  document.getElementById('cartao-wrap').innerHTML = `
-    <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px">Filtros</span>
-        <button class="btn btn-g btn-sm" onclick="_cartaoData=null;loadCartao()">🔄 Atualizar</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">MÊS</span>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">${mesPills}</div>
-        </div>
-        <div style="height:0.5px;background:#E4E1EF"></div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">CG</span>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">${cgPills}</div>
-        </div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem">
-      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Total gasto</div>
-        <div style="font-size:22px;font-weight:700;color:#1A1535">${fmt(totReal)}</div>
-      </div>
-      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Lançamentos</div>
-        <div style="font-size:22px;font-weight:700;color:#1A1535">${totNFs}</div>
-      </div>
-      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Ticket médio</div>
-        <div style="font-size:22px;font-weight:700;color:#5B3FA6">${totNFs>0?fmt(totReal/totNFs):'—'}</div>
-      </div>
-    </div>
-    <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px">
-      <span>Por categoria</span><span style="font-weight:400;color:#A89FC5">· clique para ver os lançamentos</span>
-    </div>
-    ${catRows}
-  `;
-}
-
-function toggleCartaoCat(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
-
-async function switchCartaoMes(ym) {
-  S.mes = ym; setMlabel(ym);
-  _cartaoData = null; _cartaoMes = null;
-  await loadCartao();
-}
-
-function switchCartaoCG(cg) {
-  _cartaoCG = cg;
-  renderCartao();
-}
 
 // ─── CARTÃO CORPORATIVO ──────────────────────────────────────────────────────
+
+const ALL_CGS_CARTAO = ['Morumbi','Pinheiros','Tatuapé','Paraíso','Alphaville','Anália Franco','Santana','Escritório'];
 
 let _cartaoData = null;
 let _cartaoMes  = null;
@@ -2296,21 +2102,16 @@ let _cartaoExpandedCats = new Set();
 async function loadCartao() {
   const mes = S.mes;
   if (_cartaoData && _cartaoMes === mes) { renderCartao(); return; }
-
   document.getElementById('cartao-wrap').innerHTML =
     '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
-
   try {
-    const res  = await fetch(`${S.gasUrl}?action=getData&mes=${mes}`);
+    const res  = await fetch(S.gasUrl + '?action=getData&mes=' + mes);
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-
-    // Filter only cartão corporativo
+    // Filtra somente cartão corporativo
     json.nfs = (json.nfs || []).filter(n =>
-      (n.pagamento || '').toLowerCase().includes('cartão') ||
-      (n.pagamento || '').toLowerCase().includes('cartao')
+      (n.pagamento || '').toLowerCase().includes('cart')
     );
-
     _cartaoData = json;
     _cartaoMes  = mes;
     _cartaoCG   = 'all';
@@ -2318,19 +2119,17 @@ async function loadCartao() {
     renderCartao();
   } catch(e) {
     document.getElementById('cartao-wrap').innerHTML =
-      `<div style="text-align:center;padding:40px;color:#DC2626">❌ ${e.message}</div>`;
+      '<div style="text-align:center;padding:40px;color:#DC2626">❌ ' + e.message + '</div>';
   }
 }
 
 function renderCartao() {
   if (!_cartaoData) return;
   const nfs    = _cartaoData.nfs || [];
-  const cgList = _cartaoCG === 'all' ? ALL_CGS_G : [_cartaoCG];
+  const cgList = _cartaoCG === 'all' ? ALL_CGS_CARTAO : [_cartaoCG];
 
-  // Build realizado map por categoria + CG
-  const realMap = {};
-  const nfMap   = {};
-  nfs.forEach(n => {
+  const realMap = {}, nfMap = {};
+  nfs.forEach(function(n) {
     const cat = n.categoria || 'Sem categoria';
     const cg  = (n.cg || '').replace(/^CG /i,'').trim();
     if (_cartaoCG !== 'all' && cg !== _cartaoCG) return;
@@ -2340,156 +2139,68 @@ function renderCartao() {
     nfMap[cat].push(n);
   });
 
-  // Rows sorted by total desc
-  const rows = Object.keys(realMap).map(cat => {
+  const rows = Object.keys(realMap).map(function(cat) {
     let total = 0;
     const cgBreakdown = [];
-    cgList.forEach(cg => {
+    cgList.forEach(function(cg) {
       const v = (realMap[cat]||{})[cg] || 0;
       total += v;
-      if (v > 0) cgBreakdown.push({cg, val: v});
+      if (v > 0) cgBreakdown.push({cg:cg, val:v});
     });
-    return {cat, total, cgBreakdown, nfs: nfMap[cat] || []};
-  }).filter(r => r.total > 0).sort((a,b) => b.total - a.total);
+    return {cat:cat, total:total, cgBreakdown:cgBreakdown, nfs:nfMap[cat]||[]};
+  }).filter(function(r){return r.total>0;}).sort(function(a,b){return b.total-a.total;});
 
-  const grandTotal = rows.reduce((s,r) => s + r.total, 0);
-  const totalNFs   = nfs.filter(n => _cartaoCG === 'all' || (n.cg||'').replace(/^CG /i,'').trim() === _cartaoCG).length;
+  const grandTotal = rows.reduce(function(s,r){return s+r.total;},0);
+  const nfsFiltradas = nfs.filter(function(n){
+    return _cartaoCG==='all'||(n.cg||'').replace(/^CG /i,'').trim()===_cartaoCG;
+  });
+  const totalNFs = nfsFiltradas.length;
 
-  function fmt(v) { return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits:2}); }
+  function fmt(v){return 'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});}
 
-  // Pills mês
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const mesPills = meses.map((m,i) => {
-    const ym = (_cartaoMes||'2026-07').split('-')[0] + '-' + String(i+1).padStart(2,'0');
-    const isActive = ym === _cartaoMes;
-    return `<button onclick="switchCartaoMes('${ym}')"
-      style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;
-      border:2px solid ${isActive?'#5B3FA6':'#E4E1EF'};cursor:pointer;
-      background:${isActive?'#5B3FA6':'transparent'};
-      color:${isActive?'#FFFFFF':'#6B6585'};transition:all .15s">${m}</button>`;
+  const mesPills = meses.map(function(m,i){
+    const ym = (_cartaoMes||'2026-07').split('-')[0]+'-'+String(i+1).padStart(2,'0');
+    const isActive = ym===_cartaoMes;
+    return '<button onclick="switchCartaoMes(''+ym+'')" style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;border:2px solid '+(isActive?'#5B3FA6':'#E4E1EF')+';cursor:pointer;background:'+(isActive?'#5B3FA6':'transparent')+';color:'+(isActive?'#FFFFFF':'#6B6585')+';transition:all .15s">'+m+'</button>';
   }).join('');
 
-  // Pills CG
-  const cgPills = ['all',...ALL_CGS_G].map(c => {
-    const isActive = c === _cartaoCG;
-    const label = c === 'all' ? 'Todas' : c.replace('CG ','');
-    return `<button onclick="switchCartaoCG('${c}')"
-      style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;
-      border:2px solid ${isActive?'#5B3FA6':'#E4E1EF'};cursor:pointer;
-      background:${isActive?'#5B3FA6':'transparent'};
-      color:${isActive?'#FFFFFF':'#6B6585'};transition:all .15s">${label}</button>`;
+  const cgPills = ['all'].concat(ALL_CGS_CARTAO).map(function(c){
+    const isActive = c===_cartaoCG;
+    const label = c==='all'?'Todas':c.replace('CG ','');
+    return '<button onclick="switchCartaoCG(''+c+'')" style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;border:2px solid '+(isActive?'#5B3FA6':'#E4E1EF')+';cursor:pointer;background:'+(isActive?'#5B3FA6':'transparent')+';color:'+(isActive?'#FFFFFF':'#6B6585')+';transition:all .15s">'+label+'</button>';
   }).join('');
 
-  // Category rows
-  const catRows = rows.map((r, ri) => {
-    const pct    = grandTotal > 0 ? Math.round(r.total / grandTotal * 100) : 0;
-    const rowId  = 'ccat-' + ri;
+  const catRows = rows.map(function(r,ri){
+    const pct = grandTotal>0?Math.round(r.total/grandTotal*100):0;
     const isOpen = _cartaoExpandedCats.has(ri);
 
-    const dots = _cartaoCG === 'all' ? r.cgBreakdown.map(({cg, val}) => {
-      const pctCg = r.total > 0 ? val/r.total : 0;
-      return `<div title="${cg}: ${fmt(val)}"
-        style="width:9px;height:9px;border-radius:50%;background:#5B3FA6;opacity:${0.3+pctCg*0.7};cursor:default;flex-shrink:0"></div>`;
+    const dots = _cartaoCG==='all' ? r.cgBreakdown.map(function(d){
+      const op = r.total>0?(0.3+d.val/r.total*0.7):0.3;
+      return '<div title="'+d.cg+': '+fmt(d.val)+'" style="width:9px;height:9px;border-radius:50%;background:#5B3FA6;opacity:'+op.toFixed(2)+';cursor:default;flex-shrink:0"></div>';
     }).join('') : '';
 
-    const nfRows = r.nfs
-      .filter(n => _cartaoCG === 'all' || (n.cg||'').replace(/^CG /i,'').trim() === _cartaoCG)
-      .sort((a,b) => (parseFloat(b.valor)||0) - (parseFloat(a.valor)||0))
-      .map(n => {
-        const v   = parseFloat(n.valor)||0;
-        const cg  = (n.cg||'').replace(/^CG /i,'');
-        const desc = n.comentario || n.descricao || '—';
-        return `<tr style="border-bottom:0.5px solid #E4E1EF">
-          <td style="padding:9px 14px;font-size:12.5px;font-weight:600;color:#1A1535">${n.fornecedor||'—'}</td>
-          <td style="padding:9px 14px;font-size:12px;color:#6B6585">${cg}</td>
-          <td style="padding:9px 14px;font-size:12px;color:#6B6585;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${desc}</td>
-          <td style="padding:9px 14px;font-size:13px;font-weight:700;color:#1A1535;text-align:right">${fmt(v)}</td>
-          <td style="padding:9px 14px;font-size:12px;color:#A89FC5">${n.nf||'—'}</td>
-        </tr>`;
-      }).join('') || `<tr><td colspan="5" style="padding:14px;text-align:center;font-size:12px;color:#A89FC5">Nenhum lançamento</td></tr>`;
+    const nfsFilt = r.nfs.filter(function(n){
+      return _cartaoCG==='all'||(n.cg||'').replace(/^CG /i,'').trim()===_cartaoCG;
+    }).sort(function(a,b){return (parseFloat(b.valor)||0)-(parseFloat(a.valor)||0);});
 
-    return `<div style="background:white;border-radius:14px;border:1.5px solid #E4E1EF;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(91,63,166,0.06)">
-      <div onclick="toggleCartaoCat(${ri})"
-        style="padding:14px 16px;cursor:pointer;transition:background .15s"
-        onmouseover="this.style.background='#F5F4F8'" onmouseout="this.style.background='white'">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;font-weight:600;color:#1A1535">${r.cat}</span>
-            <span style="font-size:11px;color:#A89FC5">${isOpen?'▴':'▾'}</span>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span style="font-size:12px;font-weight:700;color:#5B3FA6">${fmt(r.total)}</span>
-            <span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#EDE8FA;color:#5B3FA6">${pct}% do total</span>
-          </div>
-        </div>
-        <div style="height:6px;border-radius:999px;background:#EEEDF5;overflow:hidden;margin-bottom:10px">
-          <div style="height:100%;border-radius:999px;background:#5B3FA6;width:${pct}%;opacity:.7;transition:width .4s"></div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:12px;color:#A89FC5">${r.nfs.filter(n=>_cartaoCG==='all'||(n.cg||'').replace(/^CG /i,'').trim()===_cartaoCG).length} nota${r.nfs.length!==1?'s':''}</span>
-          ${_cartaoCG==='all'&&dots?`<div style="display:flex;gap:4px">${dots}</div>`:''}
-        </div>
-      </div>
-      ${isOpen ? `<div style="border-top:1px solid #E4E1EF">
-        <div style="padding:8px 14px;background:#F5F4F8">
-          <span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.5px">Lançamentos</span>
-        </div>
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;min-width:550px">
-            <thead><tr style="background:#F5F4F8">
-              <th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th>
-              <th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th>
-              <th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Descrição</th>
-              <th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th>
-              <th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th>
-            </tr></thead>
-            <tbody>${nfRows}</tbody>
-          </table>
-        </div>
-      </div>` : ''}
-    </div>`;
+    const nfRows = nfsFilt.map(function(n){
+      const v   = parseFloat(n.valor)||0;
+      const cg  = (n.cg||'').replace(/^CG /i,'');
+      const desc= n.comentario||'—';
+      return '<tr style="border-bottom:0.5px solid #E4E1EF"><td style="padding:9px 14px;font-size:12.5px;font-weight:600;color:#1A1535">'+(n.fornecedor||'—')+'</td><td style="padding:9px 14px;font-size:12px;color:#6B6585">'+cg+'</td><td style="padding:9px 14px;font-size:12px;color:#6B6585;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+desc+'</td><td style="padding:9px 14px;font-size:13px;font-weight:700;color:#1A1535;text-align:right">'+fmt(v)+'</td><td style="padding:9px 14px;font-size:12px;color:#A89FC5">'+(n.nf||'—')+'</td></tr>';
+    }).join('') || '<tr><td colspan="5" style="padding:14px;text-align:center;font-size:12px;color:#A89FC5">Nenhum lançamento</td></tr>';
+
+    const tableHtml = isOpen ? '<div style="border-top:1px solid #E4E1EF"><div style="padding:8px 14px;background:#F5F4F8"><span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.5px">Lançamentos</span></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:550px"><thead><tr style="background:#F5F4F8"><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Descrição</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th></tr></thead><tbody>'+nfRows+'</tbody></table></div></div>' : '';
+
+    return '<div style="background:white;border-radius:14px;border:1.5px solid #E4E1EF;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(91,63,166,0.06)"><div onclick="toggleCartaoCat('+ri+')" style="padding:14px 16px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#F5F4F8'" onmouseout="this.style.background='white'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:600;color:#1A1535">'+r.cat+'</span><span style="font-size:11px;color:#A89FC5">'+(isOpen?'▴':'▾')+'</span></div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;font-weight:700;color:#5B3FA6">'+fmt(r.total)+'</span><span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#EDE8FA;color:#5B3FA6">'+pct+'% do total</span></div></div><div style="height:6px;border-radius:999px;background:#EEEDF5;overflow:hidden;margin-bottom:10px"><div style="height:100%;border-radius:999px;background:#5B3FA6;width:'+pct+'%;opacity:.7;transition:width .4s"></div></div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:#A89FC5">'+nfsFilt.length+' nota'+(nfsFilt.length!==1?'s':'')+'</span>'+(_cartaoCG==='all'&&dots?'<div style="display:flex;gap:4px">'+dots+'</div>':'')+'</div></div>'+tableHtml+'</div>';
   }).join('') || '<div style="text-align:center;padding:40px;color:#A89FC5;font-size:13px;font-weight:600">Nenhum lançamento de cartão corporativo neste mês</div>';
 
-  document.getElementById('cartao-wrap').innerHTML = `
-    <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px">Filtros</span>
-        <button class="btn btn-g btn-sm" onclick="_cartaoData=null;loadCartao()">🔄 Atualizar</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">MÊS</span>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">${mesPills}</div>
-        </div>
-        <div style="height:0.5px;background:#E4E1EF"></div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">CG</span>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">${cgPills}</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem">
-      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Total gasto</div>
-        <div style="font-size:22px;font-weight:700;color:#1A1535">${fmt(grandTotal)}</div>
-      </div>
-      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Nº de compras</div>
-        <div style="font-size:22px;font-weight:700;color:#1A1535">${totalNFs}</div>
-      </div>
-      <div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)">
-        <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Ticket médio</div>
-        <div style="font-size:22px;font-weight:700;color:#1A1535">${totalNFs>0?fmt(grandTotal/totalNFs):'—'}</div>
-      </div>
-    </div>
-
-    <div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px">
-      <span>Por categoria</span>
-      <span style="font-weight:400;color:#A89FC5">· clique para ver os lançamentos</span>
-    </div>
-    ${catRows}
-  `;
+  document.getElementById('cartao-wrap').innerHTML =
+    '<div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px">Filtros</span><button class="btn btn-g btn-sm" onclick="_cartaoData=null;loadCartao()">🔄 Atualizar</button></div><div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">MÊS</span><div style="display:flex;gap:4px;flex-wrap:wrap">'+mesPills+'</div></div><div style="height:0.5px;background:#E4E1EF"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">CG</span><div style="display:flex;gap:4px;flex-wrap:wrap">'+cgPills+'</div></div></div></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem"><div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Total gasto</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+fmt(grandTotal)+'</div></div><div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Nº de compras</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+totalNFs+'</div></div><div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Ticket médio</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+(totalNFs>0?fmt(grandTotal/totalNFs):'—')+'</div></div></div>' +
+    '<div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px"><span>Por categoria</span><span style="font-weight:400;color:#A89FC5">· clique para ver os lançamentos</span></div>' +
+    catRows;
 }
 
 function toggleCartaoCat(ri) {
@@ -2499,10 +2210,8 @@ function toggleCartaoCat(ri) {
 }
 
 async function switchCartaoMes(ym) {
-  S.mes = ym;
-  setMlabel(ym);
-  _cartaoData = null;
-  _cartaoMes  = null;
+  S.mes = ym; setMlabel(ym);
+  _cartaoData = null; _cartaoMes = null;
   await loadCartao();
 }
 
