@@ -273,7 +273,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="nav-item" data-page="massa" href="#"><span class="nav-icon">📦</span>Lançamento em massa</a>
     <a class="nav-item" data-page="conferencia" href="#"><span class="nav-icon">✅</span>Conferência Mensal</a>
     <a class="nav-item" data-page="gastos" href="#"><span class="nav-icon">📊</span>Gastos por Categoria</a>
-    <a class="nav-item" data-page="cartao" href="#"><span class="nav-icon">💳</span>Cartão Corporativo</a>
     <a class="nav-item" data-page="lista" href="#"><span class="nav-icon">📋</span>Notas lançadas</a>
     <div class="nav-lbl">Sistema</div>
     <a class="nav-item" data-page="config" href="#"><span class="nav-icon">⚙️</span>Configurar</a>
@@ -291,7 +290,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <a class="mob-item" data-page="massa" href="#"><span class="mob-icon">📦</span>Massa</a>
     <a class="mob-item" data-page="conferencia" href="#"><span class="mob-icon">✅</span>Conferência</a>
     <a class="mob-item" data-page="gastos" href="#"><span class="mob-icon">📊</span>Gastos</a>
-    <a class="mob-item" data-page="cartao" href="#"><span class="mob-icon">💳</span>Cartão</a>
     <a class="mob-item" data-page="lista" href="#"><span class="mob-icon">📋</span>Notas</a>
     <a class="mob-item" data-page="config" href="#"><span class="mob-icon">⚙️</span>Config</a>
   </div>
@@ -596,12 +594,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div id="gastos-wrap" style="padding-bottom:2rem"></div>
     </section>
 
-
-    <!-- CARTÃO CORPORATIVO -->
-    <section class="page" id="page-cartao">
-      <div id="cartao-wrap" style="padding-bottom:2rem"></div>
-    </section>
-
 <!-- CONFIG -->
     <section class="page" id="page-config">
       <div class="fb">
@@ -693,7 +685,6 @@ const PM = {
   lista:    { title:'Notas lançadas',  sub:'Histórico e filtros' },
   conferencia: { title:'Conferência Mensal', sub:'Verifique se todas as NFs fixas foram recebidas' },
   gastos:    { title:'Gastos por Categoria', sub:'Orçado vs realizado por categoria e unidade' },
-  cartao:    { title:'Cartão Corporativo', sub:'Gastos no cartão por mês, CG e categoria' },
     config:   { title:'Configuração',    sub:'Apps Script e integrações' },
 };
 
@@ -709,7 +700,6 @@ function goTo(p) {
   if (p==='lista') renderLista();
   if (p==='conferencia') loadConferencia();
   if (p==='gastos') loadGastos();
-  if (p==='cartao') loadCartao();
   if (p==='dashboard') refreshDash();
 }
 
@@ -2088,137 +2078,6 @@ function switchGastosCG(cg) {
 }
 
 
-
-
-// ─── CARTÃO CORPORATIVO ──────────────────────────────────────────────────────
-
-const ALL_CGS_CARTAO = ['Morumbi','Pinheiros','Tatuapé','Paraíso','Alphaville','Anália Franco','Santana','Escritório'];
-
-let _cartaoData = null;
-let _cartaoMes  = null;
-let _cartaoCG   = 'all';
-let _cartaoExpandedCats = new Set();
-
-async function loadCartao() {
-  const mes = S.mes;
-  if (_cartaoData && _cartaoMes === mes) { renderCartao(); return; }
-  document.getElementById('cartao-wrap').innerHTML =
-    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
-  try {
-    const res  = await fetch(S.gasUrl + '?action=getData&mes=' + mes);
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error);
-    // Filtra somente cartão corporativo
-    json.nfs = (json.nfs || []).filter(n =>
-      (n.pagamento || '').toLowerCase().includes('cart')
-    );
-    _cartaoData = json;
-    _cartaoMes  = mes;
-    _cartaoCG   = 'all';
-    _cartaoExpandedCats = new Set();
-    renderCartao();
-  } catch(e) {
-    document.getElementById('cartao-wrap').innerHTML =
-      '<div style="text-align:center;padding:40px;color:#DC2626">❌ ' + e.message + '</div>';
-  }
-}
-
-function renderCartao() {
-  if (!_cartaoData) return;
-  const nfs    = _cartaoData.nfs || [];
-  const cgList = _cartaoCG === 'all' ? ALL_CGS_CARTAO : [_cartaoCG];
-
-  const realMap = {}, nfMap = {};
-  nfs.forEach(function(n) {
-    const cat = n.categoria || 'Sem categoria';
-    const cg  = (n.cg || '').replace(/^CG /i,'').trim();
-    if (_cartaoCG !== 'all' && cg !== _cartaoCG) return;
-    if (!realMap[cat]) realMap[cat] = {};
-    if (!nfMap[cat])   nfMap[cat]   = [];
-    realMap[cat][cg] = (realMap[cat][cg] || 0) + (parseFloat(n.valor) || 0);
-    nfMap[cat].push(n);
-  });
-
-  const rows = Object.keys(realMap).map(function(cat) {
-    let total = 0;
-    const cgBreakdown = [];
-    cgList.forEach(function(cg) {
-      const v = (realMap[cat]||{})[cg] || 0;
-      total += v;
-      if (v > 0) cgBreakdown.push({cg:cg, val:v});
-    });
-    return {cat:cat, total:total, cgBreakdown:cgBreakdown, nfs:nfMap[cat]||[]};
-  }).filter(function(r){return r.total>0;}).sort(function(a,b){return b.total-a.total;});
-
-  const grandTotal = rows.reduce(function(s,r){return s+r.total;},0);
-  const nfsFiltradas = nfs.filter(function(n){
-    return _cartaoCG==='all'||(n.cg||'').replace(/^CG /i,'').trim()===_cartaoCG;
-  });
-  const totalNFs = nfsFiltradas.length;
-
-  function fmt(v){return 'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});}
-
-  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const mesPills = meses.map(function(m,i){
-    const ym = (_cartaoMes||'2026-07').split('-')[0]+'-'+String(i+1).padStart(2,'0');
-    const isActive = ym===_cartaoMes;
-    return '<button onclick="switchCartaoMes(''+ym+'')" style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;border:2px solid '+(isActive?'#5B3FA6':'#E4E1EF')+';cursor:pointer;background:'+(isActive?'#5B3FA6':'transparent')+';color:'+(isActive?'#FFFFFF':'#6B6585')+';transition:all .15s">'+m+'</button>';
-  }).join('');
-
-  const cgPills = ['all'].concat(ALL_CGS_CARTAO).map(function(c){
-    const isActive = c===_cartaoCG;
-    const label = c==='all'?'Todas':c.replace('CG ','');
-    return '<button onclick="switchCartaoCG(''+c+'')" style="padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;border:2px solid '+(isActive?'#5B3FA6':'#E4E1EF')+';cursor:pointer;background:'+(isActive?'#5B3FA6':'transparent')+';color:'+(isActive?'#FFFFFF':'#6B6585')+';transition:all .15s">'+label+'</button>';
-  }).join('');
-
-  const catRows = rows.map(function(r,ri){
-    const pct = grandTotal>0?Math.round(r.total/grandTotal*100):0;
-    const isOpen = _cartaoExpandedCats.has(ri);
-
-    const dots = _cartaoCG==='all' ? r.cgBreakdown.map(function(d){
-      const op = r.total>0?(0.3+d.val/r.total*0.7):0.3;
-      return '<div title="'+d.cg+': '+fmt(d.val)+'" style="width:9px;height:9px;border-radius:50%;background:#5B3FA6;opacity:'+op.toFixed(2)+';cursor:default;flex-shrink:0"></div>';
-    }).join('') : '';
-
-    const nfsFilt = r.nfs.filter(function(n){
-      return _cartaoCG==='all'||(n.cg||'').replace(/^CG /i,'').trim()===_cartaoCG;
-    }).sort(function(a,b){return (parseFloat(b.valor)||0)-(parseFloat(a.valor)||0);});
-
-    const nfRows = nfsFilt.map(function(n){
-      const v   = parseFloat(n.valor)||0;
-      const cg  = (n.cg||'').replace(/^CG /i,'');
-      const desc= n.comentario||'—';
-      return '<tr style="border-bottom:0.5px solid #E4E1EF"><td style="padding:9px 14px;font-size:12.5px;font-weight:600;color:#1A1535">'+(n.fornecedor||'—')+'</td><td style="padding:9px 14px;font-size:12px;color:#6B6585">'+cg+'</td><td style="padding:9px 14px;font-size:12px;color:#6B6585;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+desc+'</td><td style="padding:9px 14px;font-size:13px;font-weight:700;color:#1A1535;text-align:right">'+fmt(v)+'</td><td style="padding:9px 14px;font-size:12px;color:#A89FC5">'+(n.nf||'—')+'</td></tr>';
-    }).join('') || '<tr><td colspan="5" style="padding:14px;text-align:center;font-size:12px;color:#A89FC5">Nenhum lançamento</td></tr>';
-
-    const tableHtml = isOpen ? '<div style="border-top:1px solid #E4E1EF"><div style="padding:8px 14px;background:#F5F4F8"><span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.5px">Lançamentos</span></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:550px"><thead><tr style="background:#F5F4F8"><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Fornecedor</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">CG</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Descrição</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:right;text-transform:uppercase;letter-spacing:.5px">Valor</th><th style="padding:8px 14px;font-size:11px;font-weight:700;color:#6B6585;text-align:left;text-transform:uppercase;letter-spacing:.5px">Nº NF</th></tr></thead><tbody>'+nfRows+'</tbody></table></div></div>' : '';
-
-    return '<div style="background:white;border-radius:14px;border:1.5px solid #E4E1EF;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(91,63,166,0.06)"><div onclick="toggleCartaoCat('+ri+')" style="padding:14px 16px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#F5F4F8'" onmouseout="this.style.background='white'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:600;color:#1A1535">'+r.cat+'</span><span style="font-size:11px;color:#A89FC5">'+(isOpen?'▴':'▾')+'</span></div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;font-weight:700;color:#5B3FA6">'+fmt(r.total)+'</span><span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:#EDE8FA;color:#5B3FA6">'+pct+'% do total</span></div></div><div style="height:6px;border-radius:999px;background:#EEEDF5;overflow:hidden;margin-bottom:10px"><div style="height:100%;border-radius:999px;background:#5B3FA6;width:'+pct+'%;opacity:.7;transition:width .4s"></div></div><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:#A89FC5">'+nfsFilt.length+' nota'+(nfsFilt.length!==1?'s':'')+'</span>'+(_cartaoCG==='all'&&dots?'<div style="display:flex;gap:4px">'+dots+'</div>':'')+'</div></div>'+tableHtml+'</div>';
-  }).join('') || '<div style="text-align:center;padding:40px;color:#A89FC5;font-size:13px;font-weight:600">Nenhum lançamento de cartão corporativo neste mês</div>';
-
-  document.getElementById('cartao-wrap').innerHTML =
-    '<div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px">Filtros</span><button class="btn btn-g btn-sm" onclick="_cartaoData=null;loadCartao()">🔄 Atualizar</button></div><div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">MÊS</span><div style="display:flex;gap:4px;flex-wrap:wrap">'+mesPills+'</div></div><div style="height:0.5px;background:#E4E1EF"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;color:#6B6585;min-width:26px">CG</span><div style="display:flex;gap:4px;flex-wrap:wrap">'+cgPills+'</div></div></div></div>' +
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem"><div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Total gasto</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+fmt(grandTotal)+'</div></div><div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Nº de compras</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+totalNFs+'</div></div><div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Ticket médio</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+(totalNFs>0?fmt(grandTotal/totalNFs):'—')+'</div></div></div>' +
-    '<div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px"><span>Por categoria</span><span style="font-weight:400;color:#A89FC5">· clique para ver os lançamentos</span></div>' +
-    catRows;
-}
-
-function toggleCartaoCat(ri) {
-  if (_cartaoExpandedCats.has(ri)) _cartaoExpandedCats.delete(ri);
-  else _cartaoExpandedCats.add(ri);
-  renderCartao();
-}
-
-async function switchCartaoMes(ym) {
-  S.mes = ym; setMlabel(ym);
-  _cartaoData = null; _cartaoMes = null;
-  await loadCartao();
-}
-
-function switchCartaoCG(cg) {
-  _cartaoCG = cg;
-  renderCartao();
-}
 
 </script>
 </body>
