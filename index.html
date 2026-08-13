@@ -2223,8 +2223,54 @@ function renderCartao() {
     +'<div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Nº de compras</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+totalNFs+'</div></div>'
     +'<div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(91,63,166,0.07)"><div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Ticket médio</div><div style="font-size:22px;font-weight:700;color:#1A1535">'+(totalNFs>0?fmt(grand/totalNFs):'—')+'</div></div>'
     +'</div>'
+    + renderCartaoBarChart(nfsFilt, grand)
     +'<div style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px"><span>Por categoria</span><span style="font-weight:400;color:#A89FC5">· clique para ver os lançamentos</span></div>'
     + catRows;
+}
+
+function renderCartaoBarChart(nfsList, grand) {
+  if (!nfsList || nfsList.length === 0) return '';
+
+  // Agrupa por CG
+  const cgTotals = {};
+  nfsList.forEach(function(n) {
+    const cg = (n.cg || '').replace(/^CG /i,'').trim() || 'Outros';
+    cgTotals[cg] = (cgTotals[cg] || 0) + (parseFloat(n.valor) || 0);
+  });
+
+  const sorted = Object.entries(cgTotals)
+    .filter(function(e){ return e[1] > 0; })
+    .sort(function(a,b){ return b[1]-a[1]; });
+
+  if (sorted.length === 0) return '';
+
+  const max = sorted[0][1];
+  function fmt(v){ return 'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
+
+  const bars = sorted.map(function(e) {
+    const cg = e[0], val = e[1];
+    const pct = Math.round(val/max*100);
+    const inside = pct > 38;
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +'<span style="font-size:12px;color:#6B6585;min-width:110px;text-align:right;flex-shrink:0">'+cg+'</span>'
+      +'<div style="flex:1;height:26px;background:#F0EEF7;border-radius:6px;overflow:hidden">'
+      +'<div style="height:100%;border-radius:6px;background:#5B3FA6;width:'+pct+'%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;transition:width .5s">'
+      +(inside?'<span style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap">'+fmt(val)+'</span>':'')
+      +'</div></div>'
+      +(!inside?'<span style="font-size:12px;font-weight:600;color:#6B6585;white-space:nowrap;flex-shrink:0">'+fmt(val)+'</span>':'')
+      +'</div>';
+  }).join('');
+
+  const maior = sorted[0][0];
+  const pctMaior = grand > 0 ? Math.round(sorted[0][1]/grand*100) : 0;
+
+  return '<div style="background:white;border:1.5px solid #E4E1EF;border-radius:14px;padding:16px 18px;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(91,63,166,0.07)">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'
+    +'<span style="font-size:11px;font-weight:700;color:#6B6585;text-transform:uppercase;letter-spacing:.6px">Gastos por unidade</span>'
+    +'<span style="font-size:11px;padding:3px 10px;border-radius:999px;background:#EDE8FA;color:#5B3FA6;font-weight:600">Maior: '+maior+' ('+pctMaior+'%)</span>'
+    +'</div>'
+    + bars
+    +'</div>';
 }
 
 function toggleCartaoCat(ri) {
