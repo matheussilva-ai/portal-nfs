@@ -1144,7 +1144,6 @@ async function refreshDash(){
       }
     }catch(e){setGas(false);}
   }
-  }
   const mn=S.nfs.filter(n=>getMesFinanceiro(n)===S.mes);
   const tot=mn.reduce((s,n)=>s+(parseFloat(n.valor)||0),0);
   const pend=mn.filter(n=>n.status==='Pendente').length;
@@ -2873,6 +2872,7 @@ function switchCartaoCG(cg) { _cartaoCG = cg; renderCartao(); }
 </script>
 </body>
 </html>
+
 
 
 
