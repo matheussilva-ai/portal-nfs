@@ -1060,14 +1060,11 @@ function getMesFinanceiro(n) {
   function pad2(v) { return v < 10 ? '0' + v : '' + v; }
 
   if (venc) {
-    // Formato ISO ou YYYY-MM-DD: "2026-10-06..."
     if (venc.length >= 10 && venc[4] === '-' && venc[7] === '-') {
       ano = parseInt(venc.slice(0, 4), 10);
       mes = parseInt(venc.slice(5, 7), 10);
       dia = parseInt(venc.slice(8, 10), 10);
-    }
-    // Formato brasileiro da planilha: "06/10" ou "06/10/2026"
-    else if (venc.indexOf('/') !== -1) {
+    } else if (venc.indexOf('/') !== -1) {
       const parts = venc.split('/');
       if (parts.length >= 2) {
         dia = parseInt(parts[0].trim(), 10);
@@ -1078,15 +1075,12 @@ function getMesFinanceiro(n) {
           else if (aStr.length >= 4) ano = parseInt(aStr.slice(0, 4), 10);
         }
       }
-    }
-    // Formato YYYY-MM
-    else if (venc.length === 7 && venc[4] === '-') {
+    } else if (venc.length === 7 && venc[4] === '-') {
       ano = parseInt(venc.slice(0, 4), 10);
       mes = parseInt(venc.slice(5, 7), 10);
     }
   }
 
-  // Se identificou o mês de vencimento (ex: 06/10 -> mês 10):
   if (mes !== null && !isNaN(mes) && mes >= 1 && mes <= 12) {
     if (isCartao && dia !== null && !isNaN(dia)) {
       if (dia <= 5) return ano + '-' + pad2(mes);
@@ -1099,11 +1093,9 @@ function getMesFinanceiro(n) {
       }
       return ano + '-' + pad2(mes);
     }
-    // Boletos, Manutenção (Help Center), Segurança (Fênix), etc.:
     return ano + '-' + pad2(mes);
   }
 
-  // Fallback caso não tenha vencimento preenchido
   const mesStr = (n.mes || '').trim().toLowerCase();
   const mesesMap = {
     'janeiro':'01','fevereiro':'02','março':'03','marco':'03','abril':'04','maio':'05',
@@ -1117,18 +1109,41 @@ function getMesFinanceiro(n) {
   return (n.mes || '').slice(0, 7);
 }
 
+function getMesOffset(ym, offset) {
+  let parts = ym.split('-').map(Number);
+  let y = parts[0], m = parts[1] + offset;
+  if (m < 1) { m = 12; y -= 1; }
+  else if (m > 12) { m = 1; y += 1; }
+  return y + '-' + (m < 10 ? '0' + m : '' + m);
+}
+
+async function fetchMultiMes(mes) {
+  const mesAnt = getMesOffset(mes, -1);
+  const [rAtual, rAnt] = await Promise.all([
+    fetch(`${S.gasUrl}?action=getData&mes=${mes}`).then(r => r.json()).catch(() => ({ok:false})),
+    fetch(`${S.gasUrl}?action=getData&mes=${mesAnt}`).then(r => r.json()).catch(() => ({ok:false}))
+  ]);
+  const budget = rAtual.budget || [];
+  const mapUniq = {};
+  [...(rAtual.nfs || []), ...(rAnt.nfs || [])].forEach(n => {
+    const k = `${n.nf || ''}_${n.fornecedor || ''}_${n.valor || ''}_${n.cg || ''}`;
+    if (!mapUniq[k]) mapUniq[k] = n;
+  });
+  return { ok: true, nfs: Object.values(mapUniq), budget: budget };
+}
+
 async function refreshDash(){
   if(S.gasUrl){
     try{
-      const res=await fetch(`${S.gasUrl}?action=getData&mes=${S.mes}`);
-      const json=await res.json();
+      const json = await fetchMultiMes(S.mes);
       if(json.ok){
         S.nfs=json.nfs||S.nfs;S.budget=json.budget||S.budget;
-        localStorage.setItem('nfs_cache',JSON.stringify(S.nfs.slice(0,200)));
+        localStorage.setItem('nfs_cache',JSON.stringify(S.nfs.slice(0,400)));
         localStorage.setItem('bud_cache',JSON.stringify(S.budget));
         setGas(true);
       }
     }catch(e){setGas(false);}
+  }
   }
   const mn=S.nfs.filter(n=>getMesFinanceiro(n)===S.mes);
   const tot=mn.reduce((s,n)=>s+(parseFloat(n.valor)||0),0);
@@ -2858,6 +2873,7 @@ function switchCartaoCG(cg) { _cartaoCG = cg; renderCartao(); }
 </script>
 </body>
 </html>
+
 
 
 
