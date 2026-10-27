@@ -2275,8 +2275,7 @@ async function loadConferencia() {
     '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
 
   try {
-    const res  = await fetch(`${S.gasUrl}?action=getData&mes=${mes}`);
-    const json = await res.json();
+    const json = await fetchMultiMes(mes);
     if (!json.ok) throw new Error(json.error);
 
     const nfs = json.nfs || [];
@@ -2428,8 +2427,7 @@ async function loadGastos() {
   document.getElementById('gastos-wrap').innerHTML =
     '<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
   try {
-    const res  = await fetch(`${S.gasUrl}?action=getData&mes=${mes}`);
-    const json = await res.json();
+    const json = await fetchMultiMes(mes);
     if (!json.ok) throw new Error(json.error);
     _gastosData = json;
     _gastosMes  = mes;
@@ -2686,8 +2684,7 @@ async function loadCartao() {
   document.getElementById('cartao-wrap').innerHTML =
     '<div style="padding:40px;text-align:center;font-size:13px;font-weight:700;color:var(--text-muted)">⏳ Consultando planilha…</div>';
   try {
-    const res  = await fetch(S.gasUrl + '?action=getData&mes=' + mes);
-    const json = await res.json();
+    const json = await fetchMultiMes(mes);
     if (!json.ok) throw new Error(json.error);
     json.nfs = (json.nfs || []).filter(n => (n.pagamento || '').toLowerCase().includes('cart'));
     _cartaoData = json;
@@ -2872,6 +2869,7 @@ function switchCartaoCG(cg) { _cartaoCG = cg; renderCartao(); }
 </script>
 </body>
 </html>
+
 
 
 
