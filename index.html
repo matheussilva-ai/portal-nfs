@@ -1053,18 +1053,43 @@ function getMesFinanceiro(n) {
   const isCartao = pgt.includes('cart');
   const venc = (n.vencimento || '').trim();
 
-  function formatYM(ano, mes) {
-    return ano + '-' + (mes < 10 ? '0' + mes : '' + mes);
+  let dia = null;
+  let mes = null;
+  let ano = parseInt((S.mes || '2026-01').slice(0, 4), 10) || 2026;
+
+  function pad2(v) { return v < 10 ? '0' + v : '' + v; }
+
+  if (venc) {
+    // Formato ISO ou YYYY-MM-DD: "2026-10-06..."
+    if (venc.length >= 10 && venc[4] === '-' && venc[7] === '-') {
+      ano = parseInt(venc.slice(0, 4), 10);
+      mes = parseInt(venc.slice(5, 7), 10);
+      dia = parseInt(venc.slice(8, 10), 10);
+    }
+    // Formato brasileiro da planilha: "06/10" ou "06/10/2026"
+    else if (venc.indexOf('/') !== -1) {
+      const parts = venc.split('/');
+      if (parts.length >= 2) {
+        dia = parseInt(parts[0].trim(), 10);
+        mes = parseInt(parts[1].trim(), 10);
+        if (parts.length >= 3 && parts[2].trim()) {
+          const aStr = parts[2].trim();
+          if (aStr.length === 2) ano = parseInt('20' + aStr, 10);
+          else if (aStr.length >= 4) ano = parseInt(aStr.slice(0, 4), 10);
+        }
+      }
+    }
+    // Formato YYYY-MM
+    else if (venc.length === 7 && venc[4] === '-') {
+      ano = parseInt(venc.slice(0, 4), 10);
+      mes = parseInt(venc.slice(5, 7), 10);
+    }
   }
 
-  // Regra de Cartão Corporativo (alinhada com Fernanda Bandeira)
-  if (isCartao) {
-    if (venc && venc.length >= 10) {
-      const dia = parseInt(venc.slice(8, 10), 10);
-      let ano = parseInt(venc.slice(0, 4), 10);
-      let mes = parseInt(venc.slice(5, 7), 10);
-
-      if (dia <= 5) return formatYM(ano, mes);
+  // Se identificou o mês de vencimento (ex: 06/10 -> mês 10):
+  if (mes !== null && !isNaN(mes) && mes >= 1 && mes <= 12) {
+    if (isCartao && dia !== null && !isNaN(dia)) {
+      if (dia <= 5) return ano + '-' + pad2(mes);
       if (dia <= 30) {
         mes += 1;
         if (mes > 12) { mes = 1; ano += 1; }
@@ -1072,20 +1097,23 @@ function getMesFinanceiro(n) {
         mes += 2;
         if (mes > 12) { mes -= 12; ano += 1; }
       }
-      return formatYM(ano, mes);
+      return ano + '-' + pad2(mes);
     }
-    const mesBase = (n.mes || '').slice(0, 7);
-    if (mesBase && mesBase.includes('-')) {
-      let parts = mesBase.split('-');
-      let ano = parseInt(parts[0], 10);
-      let mes = parseInt(parts[1], 10) + 1;
-      if (mes > 12) { mes = 1; ano += 1; }
-      return formatYM(ano, mes);
-    }
+    // Boletos, Manutenção (Help Center), Segurança (Fênix), etc.:
+    return ano + '-' + pad2(mes);
   }
 
-  // Regra Geral (Boletos, PIX, Manutenções): mês do vencimento
-  if (venc && venc.length >= 7) return venc.slice(0, 7);
+  // Fallback caso não tenha vencimento preenchido
+  const mesStr = (n.mes || '').trim().toLowerCase();
+  const mesesMap = {
+    'janeiro':'01','fevereiro':'02','março':'03','marco':'03','abril':'04','maio':'05',
+    'junho':'06','julho':'07','agosto':'08','setembro':'09','outubro':'10','novembro':'11','dezembro':'12'
+  };
+  for (const k in mesesMap) {
+    if (mesStr.indexOf(k) !== -1) return ano + '-' + mesesMap[k];
+  }
+  if (mesStr.length >= 7 && mesStr[4] === '-') return mesStr.slice(0, 7);
+
   return (n.mes || '').slice(0, 7);
 }
 
@@ -2830,5 +2858,6 @@ function switchCartaoCG(cg) { _cartaoCG = cg; renderCartao(); }
 </script>
 </body>
 </html>
+
 
 
