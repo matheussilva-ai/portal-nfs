@@ -1046,43 +1046,6 @@ function clearForm(){
   S.files=[];renderFiles();setTipo('recorrente');
 }
 
-// Determina o mês financeiro da despesa (regime de caixa / fluxo financeiro)
-function getMesFinanceiro(n) {
-  if (!n) return '';
-  const pgt = (n.pagamento || '').toLowerCase();
-  const isCartao = pgt.includes('cart');
-  const venc = (n.vencimento || '').trim();
-
-  // Regra de Cartão Corporativo (alinhada com Fernanda Bandeira)
-  if (isCartao) {
-    if (venc && venc.length >= 10) {
-      const dia = parseInt(venc.slice(8, 10), 10);
-      let ano = parseInt(venc.slice(0, 4), 10);
-      let mes = parseInt(venc.slice(5, 7), 10);
-      if (dia <= 5) return ${ano}-;
-      if (dia <= 30) {
-        mes += 1;
-        if (mes > 12) { mes = 1; ano += 1; }
-      } else {
-        mes += 2;
-        if (mes > 12) { mes -= 12; ano += 1; }
-      }
-      return ${ano}-;
-    }
-    const mesBase = (n.mes || '').slice(0, 7);
-    if (mesBase && mesBase.includes('-')) {
-      let [ano, mes] = mesBase.split('-').map(Number);
-      mes += 1;
-      if (mes > 12) { mes = 1; ano += 1; }
-      return ${ano}-;
-    }
-  }
-
-  // Regra Geral (Boletos, PIX, Manutenções): mês do vencimento
-  if (venc && venc.length >= 7) return venc.slice(0, 7);
-  return (n.mes || '').slice(0, 7);
-}
-
 async function refreshDash(){
   if(S.gasUrl){
     try{
@@ -1096,7 +1059,7 @@ async function refreshDash(){
       }
     }catch(e){setGas(false);}
   }
-  const mn=S.nfs.filter(n=>getMesFinanceiro(n)===S.mes);
+  const mn=S.nfs.filter(n=>(n.mes||'')===S.mes);
   const tot=mn.reduce((s,n)=>s+(parseFloat(n.valor)||0),0);
   const pend=mn.filter(n=>n.status==='Pendente').length;
   const avl=mn.filter(n=>n.tipo==='avulso').length;
@@ -1315,12 +1278,12 @@ function toggleAllCGs(){
     cgs.forEach(cg=>window._exp.add(cg));
     if(btn) btn.textContent='Recolher todas';
   }
-  renderBudget(S.nfs.filter(n=>getMesFinanceiro(n)===S.mes));
+  renderBudget(S.nfs.filter(n=>(n.mes||'')===S.mes));
 }
 
 function focusCG(cg){
   window._exp.add(cg);
-  renderBudget(S.nfs.filter(n=>getMesFinanceiro(n)===S.mes));
+  renderBudget(S.nfs.filter(n=>(n.mes||'')===S.mes));
   const cleanId='cg-row-'+cg.replace(/[^a-zA-Z0-9]/g,'-');
   const row=document.getElementById(cleanId);
   if(row){
@@ -1419,7 +1382,7 @@ function renderBudget(mn){
     `;
   }
 }
-function toggleCG(cg){window._exp.has(cg)?window._exp.delete(cg):window._exp.add(cg);renderBudget(S.nfs.filter(n=>getMesFinanceiro(n)===S.mes));}
+function toggleCG(cg){window._exp.has(cg)?window._exp.delete(cg):window._exp.add(cg);renderBudget(S.nfs.filter(n=>(n.mes||'')===S.mes));}
 
 function nfRow(n,anx){
   const st=(n.status||'Pendente').toLowerCase();const tp=(n.tipo||'recorrente').toLowerCase();
@@ -1469,7 +1432,7 @@ function renderLista(){
   const cg=document.getElementById('fb-cg').value;
   const st=document.getElementById('fb-st').value;
   const tp=document.getElementById('fb-tp').value;
-  const mn=S.nfs.filter(n=>getMesFinanceiro(n)===S.mes);
+  const mn=S.nfs.filter(n=>(n.mes||'')===S.mes);
   const f=mn.filter(n=>{
     if(s&&!`${n.fornecedor} ${n.nf}`.toLowerCase().includes(s))return false;
     if(cg&&n.cg!==cg)return false;
@@ -2411,7 +2374,6 @@ function renderGastos() {
   const realMap = {};
   const nfMap   = {};
   nfs.forEach(n => {
-    if (_gastosMes && getMesFinanceiro(n) !== _gastosMes) return;
     const cat = n.categoria || '';
     const cg  = (n.cg || '').replace(/^CG /i,'').trim();
     if (!cgList.includes(cg) && _gastosCG !== 'all') return;
@@ -2660,7 +2622,6 @@ function renderCartao() {
 
   const realMap = {}, nfMap = {};
   nfs.forEach(function(n) {
-    if (_cartaoMes && getMesFinanceiro(n) !== _cartaoMes) return;
     const cat = n.categoria || 'Sem categoria';
     const cg  = (n.cg || '').replace(/^CG /i,'').trim();
     if (_cartaoCG !== 'all' && cg !== _cartaoCG) return;
@@ -2824,4 +2785,3 @@ function switchCartaoCG(cg) { _cartaoCG = cg; renderCartao(); }
 </script>
 </body>
 </html>
-
